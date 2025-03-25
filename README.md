@@ -5,6 +5,16 @@
 // TODO(user): An in-depth paragraph about your project and overview of use
 
 ## Getting Started
+### Useful Commands
+Install istio, blackbox exporter, prometheus via helm
+```shell
+setup.sh
+```
+Forward prometheus UI to localhost
+```
+kubectl port-forward -n prometheus services/prometheus-server 9090:80
+```
+
 
 ### Prerequisites
 - go version v1.22.0+
