@@ -16,5 +16,5 @@ helm upgrade --install blackbox-exporter -n prometheus  prometheus-community/pro
 
 helm upgrade --install prometheus-operator prometheus-community/kube-prometheus-stack -n prometheus --create-namespace --set prometheus.serviceAccount.create=true    --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false  --set prometheus.rbac.create=true  #  --set prometheus.prometheusSpec.serviceMonitorNamespaceSelector=[]    --set prometheus.prometheusSpec.serviceMonitorSelector=[]
 
-# Apply Example Entry
-kubectl apply -f config/samples/serviceEntry.yaml
+# Apply Example ServiceEntry
+kubectl apply -f serviceEntry.yaml

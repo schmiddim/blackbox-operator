@@ -19,10 +19,11 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/schmiddim/blackbox-operator/pkg/config"
 	"os"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
+	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,11 +35,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/schmiddim/blackbox-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 
 var (
 	scheme   = runtime.NewScheme()
+	_        = istioNetworking.AddToScheme(scheme)
+	_        = monitoringv1.AddToScheme(scheme)
 	setupLog = ctrl.Log.WithName("setup")
 )
 
@@ -54,6 +59,7 @@ func main() {
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
+	var configFile string
 	var tlsOpts []func(*tls.Config)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
@@ -65,6 +71,7 @@ func main() {
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	flag.StringVar(&configFile, "config", "config.yaml", "Path to the configuration file")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -140,6 +147,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	cfg, err := config.LoadConfig(configFile)
+	if err != nil {
+		setupLog.Error(err, "unable to load config")
+		os.Exit(1)
+	}
+
+	if err = (&controller.ServiceEntryReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Config: cfg,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ServiceEntry")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

@@ -1,0 +1,7 @@
+logLevel: "info"
+module: "http_2xx"
+interval: "2s"
+scrapeTimeout: "1s"
+selector:
+  matchLabels:
+    app.kubernetes.io/instance: blackbox-exporter
