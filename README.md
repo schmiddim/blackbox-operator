@@ -1,4 +1,6 @@
 # blackbox-operator
+[![Docker Pulls](https://img.shields.io/docker/pulls/schmiddim/spacelift-pushgateway.svg)](https://hub.docker.com/r/schmiddim/blackbox-operator)
+
 // TODO(user): Add simple overview of use/purpose
 
 ## Description
