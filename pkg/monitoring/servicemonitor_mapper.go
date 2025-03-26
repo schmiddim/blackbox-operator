@@ -68,7 +68,7 @@ func (smm *ServiceMonitorMapper) MapperForService(se *istioNetworking.ServiceEnt
 			NamespaceSelector: monitoringv1.NamespaceSelector{
 				Any: true,
 			},
-			Selector:  smm.config.Selector,
+			Selector:  smm.config.LabelSelector,
 			Endpoints: smm.generateEndpoints(se.Spec.Hosts),
 		},
 	}

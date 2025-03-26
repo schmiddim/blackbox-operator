@@ -8,12 +8,18 @@ import (
 	"os"
 )
 
+type LabelSelectorYAML struct {
+	MatchLabels      map[string]string                 `yaml:"matchLabels,omitempty"`
+	MatchExpressions []metav1.LabelSelectorRequirement `yaml:"matchExpressions,omitempty"`
+}
+
 type Config struct {
 	LogLevel      string                `yaml:"logLevel"`
 	Module        string                `yaml:"module"`
 	Interval      monitoringv1.Duration `yaml:"interval"`
 	ScrapeTimeout monitoringv1.Duration `yaml:"scrapeTimeout"`
-	Selector      metav1.LabelSelector  `yaml:"selector"`
+	TmpSelector   LabelSelectorYAML     `yaml:"selector"`
+	LabelSelector metav1.LabelSelector
 }
 
 func LoadConfig(filePath string) (*Config, error) {
@@ -28,11 +34,16 @@ func LoadConfig(filePath string) (*Config, error) {
 	config.LogLevel = "info"
 	config.ScrapeTimeout = "30s"
 	config.Interval = "30s"
-	config.Selector = metav1.LabelSelector{
-		MatchLabels: map[string]string{"app.kubernetes.io/instance": "blackbox-exporter"},
+	config.TmpSelector = LabelSelectorYAML{
+		MatchLabels:      map[string]string{"app.kubernetes.io/instance": "blackbox-exporter"},
+		MatchExpressions: nil,
 	}
 
 	err = yaml.Unmarshal(data, &config)
+	config.LabelSelector = metav1.LabelSelector{
+		MatchLabels:      config.TmpSelector.MatchLabels,
+		MatchExpressions: config.TmpSelector.MatchExpressions,
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error parsing YAML: %w", err)
 	}

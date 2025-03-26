@@ -1,7 +1,7 @@
 logLevel: "info"
-module: "http_2xx"
+module: "http_002xx"
 interval: "2s"
 scrapeTimeout: "1s"
 selector:
   matchLabels:
-    app.kubernetes.io/instance: blackbox-exporter
+    app.kubernetes.io/instance: blacksasdfasfdbox-exporter
