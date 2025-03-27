@@ -5,10 +5,10 @@ go 1.23.0
 toolchain go1.23.7
 
 require (
+	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.36.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.81.0
-	gopkg.in/yaml.v2 v2.4.0
 	istio.io/client-go v1.25.0
 	k8s.io/apimachinery v0.32.2
 	k8s.io/client-go v0.32.2
