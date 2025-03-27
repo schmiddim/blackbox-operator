@@ -34,10 +34,10 @@ func LoadConfig(filePath string) (*Config, error) {
 	config.LogLevel = "info"
 	config.ScrapeTimeout = "30s"
 	config.Interval = "30s"
-	config.TmpSelector = LabelSelectorYAML{
-		MatchLabels:      map[string]string{"app.kubernetes.io/instance": "blackbox-exporter"},
-		MatchExpressions: nil,
-	}
+	//config.TmpSelector = LabelSelectorYAML{
+	//	MatchLabels:      map[string]string{"app.kubernetes.io/instance": "blackbox-exporter"},
+	//	MatchExpressions: nil,
+	//}
 
 	err = yaml.Unmarshal(data, &config)
 	config.LabelSelector = metav1.LabelSelector{

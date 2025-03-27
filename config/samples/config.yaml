@@ -4,4 +4,4 @@ interval: "2s"
 scrapeTimeout: "1s"
 selector:
   matchLabels:
-    app.kubernetes.io/instance: blacksasdfasfdbox-exporter
+    app.kubernetes.io/instance: blackbox-exporter-default-config
