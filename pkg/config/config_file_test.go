@@ -20,6 +20,9 @@ selector:
     app.kubernetes.io/name: "test-app"
 protocolModuleMappings:
   TCP: tcp_connect
+exclude:
+  matchLabels:
+    blackbox-operator-scrape: false
 `
 
 // Helper function to create a temporary YAML file
@@ -80,6 +83,18 @@ func TestLoadConfig(t *testing.T) {
 	}
 	if !reflect.DeepEqual(config.ProtocolModuleMappings, expectedConfig.ProtocolModuleMappings) {
 		t.Errorf("Expected LabelSelector: %v, got: %v", expectedConfig.ProtocolModuleMappings, config.ProtocolModuleMappings)
+	}
+}
+func TestExcludeSelector(t *testing.T) {
+	filePath := createTempFile(t, testYAML)
+	defer os.Remove(filePath)
+	config, err := LoadConfig(filePath)
+	if err != nil {
+		t.Fatalf("Error loading default configuration: %v", err)
+	}
+
+	if len(config.ExcludeSelector.MatchLabels) == 0 {
+		t.Errorf("ExcludeMatchLabels is empty")
 	}
 }
 

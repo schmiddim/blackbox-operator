@@ -4,6 +4,9 @@ scrapeTimeout: "1s"
 selector:
   matchLabels:
     app.kubernetes.io/instance: blackbox-exporter
+exclude:
+  matchLabels:
+    blackbox-operator-scrape: "false"
 defaultModule: http_2xx
 protocolModuleMappings:
   TCP: tcp_connect

@@ -3,7 +3,8 @@ package config
 import (
 	"fmt"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"gopkg.in/yaml.v3"
+	yaml "sigs.k8s.io/yaml/goyaml.v3"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 )
@@ -20,7 +21,9 @@ type Config struct {
 	ScrapeTimeout          monitoringv1.Duration `yaml:"scrapeTimeout"`
 	TmpSelector            LabelSelectorYAML     `yaml:"selector"`
 	LabelSelector          metav1.LabelSelector  // `yaml:"selector"`
-	ProtocolModuleMappings map[string]string     `yaml:"protocolModuleMappings,omitempty"`
+	TmpExclude             LabelSelectorYAML     `yaml:"exclude"`
+	ExcludeSelector        metav1.LabelSelector
+	ProtocolModuleMappings map[string]string `yaml:"protocolModuleMappings,omitempty"`
 }
 
 func LoadConfig(filePath string) (*Config, error) {
@@ -43,13 +46,17 @@ func LoadConfig(filePath string) (*Config, error) {
 		MatchExpressions: config.TmpSelector.MatchExpressions,
 	}
 
+	config.ExcludeSelector = metav1.LabelSelector{
+		MatchLabels:      config.TmpExclude.MatchLabels,
+		MatchExpressions: config.TmpExclude.MatchExpressions,
+	}
+
 	if len(config.LabelSelector.MatchLabels) > 0 {
 		config.TmpSelector = LabelSelectorYAML{
 			MatchLabels:      map[string]string{"app.kubernetes.io/name": "blackbox-exporter"},
 			MatchExpressions: nil,
 		}
 	}
-	//fmt.Println(config.LabelSelector, len(config.LabelSelector.MatchLabels), len(config.LabelSelector.MatchExpressions))
 
 	if err != nil {
 		return nil, fmt.Errorf("error parsing YAML: %w", err)

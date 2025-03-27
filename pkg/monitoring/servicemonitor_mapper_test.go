@@ -2,48 +2,95 @@ package monitoring
 
 import (
 	"github.com/go-logr/logr"
-	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
 	"istio.io/api/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
 
-func TestModuleForProtocol(t *testing.T) {
-	cfg := &config.Config{
+func getCfg() config.Config {
+	return config.Config{
 		LogLevel:      "debug",
 		DefaultModule: "http_test",
-		Interval:      monitoringv1.Duration("10s"),
-		ScrapeTimeout: monitoringv1.Duration("5s"),
+		Interval:      "10s",
+		ScrapeTimeout: "5s",
 		LabelSelector: metav1.LabelSelector{
 			MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
 		},
 		ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
 	}
-
+}
+func TestModuleForHost(t *testing.T) {
+	cfg := getCfg()
 	logger := logr.Logger{}
-	mapper := NewServiceMonitorMapper(cfg, &logger)
+	mapper := NewServiceMonitorMapper(&cfg, &logger)
 
-	servicePorts := v1alpha3.ServicePort{
-
-		Number:   9093,
-		Protocol: "TCP",
-		Name:     "tcp",
+	tests := []*struct {
+		name         string
+		host         string
+		servicePort  v1alpha3.ServicePort
+		expectedHost string
+	}{
+		{
+			name: "HTTPS with port 9093",
+			host: "google.de",
+			servicePort: v1alpha3.ServicePort{
+				Number:   9093,
+				Protocol: "HTTPS",
+				Name:     "tcp",
+			},
+			expectedHost: "https://google.de:9093",
+		},
+		{
+			name: "no Protocol",
+			host: "test.com",
+			servicePort: v1alpha3.ServicePort{
+				Number:   8080,
+				Protocol: "UNKNOWN",
+				Name:     "unknown",
+			},
+			expectedHost: "test.com:8080",
+		},
 	}
-	module := mapper.getModuleForProtocol(&servicePorts)
-	if module != "tcp_connect" {
-		t.Errorf("expect tcp_connect, got %s", module)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := mapper.getHost(tt.host, &tt.servicePort)
+			if got != tt.expectedHost {
+				t.Errorf("expected %s, got %s", tt.expectedHost, got)
+			}
+		})
+	}
+}
+func TestModuleForProtocol(t *testing.T) {
+	cfg := getCfg()
+	logger := logr.Logger{}
+	mapper := NewServiceMonitorMapper(&cfg, &logger)
+
+	tests := []*struct {
+		name           string
+		servicePort    v1alpha3.ServicePort
+		expectedModule string
+	}{
+		{
+			name:           "TCP Protocol",
+			servicePort:    v1alpha3.ServicePort{Number: 9093, Name: "tcp", Protocol: "TCP"},
+			expectedModule: "tcp_connect",
+		},
+		{
+			name:           "Back to default",
+			servicePort:    v1alpha3.ServicePort{Number: 9093, Name: "heinzi", Protocol: "HTTPS"},
+			expectedModule: cfg.DefaultModule,
+		},
 	}
 
-	servicePorts = v1alpha3.ServicePort{
-
-		Number:   9093,
-		Protocol: "fooobarto",
-		Name:     "tcp",
-	}
-	module = mapper.getModuleForProtocol(&servicePorts)
-	if module != cfg.DefaultModule {
-		t.Errorf("expect %s, got %s", cfg.DefaultModule, module)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := mapper.getModuleForProtocol(&tt.servicePort)
+			if got != tt.expectedModule {
+				t.Errorf("expected %s, got %s", tt.expectedModule, got)
+			}
+		})
 	}
 
 }

@@ -24,10 +24,10 @@ func NewServiceMonitorMapper(cfg *config.Config, log *logr.Logger) *ServiceMonit
 
 func (smm *ServiceMonitorMapper) getHost(host string, port *v1alpha3.ServicePort) string {
 
-	if port.Protocol == "TCP" {
-		return fmt.Sprintf("%s:%d", host, port.Number)
+	host = fmt.Sprintf("%s:%d", host, port.Number)
+	if port.GetProtocol() == "HTTPS" {
+		host = fmt.Sprintf("https://%s", host)
 	}
-
 	return host
 }
 func (smm *ServiceMonitorMapper) getModuleForProtocol(port *v1alpha3.ServicePort) string {
@@ -38,7 +38,7 @@ func (smm *ServiceMonitorMapper) getModuleForProtocol(port *v1alpha3.ServicePort
 		}
 	}
 
-	smm.log.Info("No module for protocol", "protocol", port.Protocol)
+	smm.log.Info(fmt.Sprintf("No module for protocol %s - configuring Default (%s)", port.Protocol, smm.config.DefaultModule))
 	return smm.config.DefaultModule
 }
 

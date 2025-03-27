@@ -3,6 +3,24 @@ kind: ServiceEntry
 metadata:
   labels:
     managed-by: istio-operator
+    blackbox-operator-scrape: "false"
+  name: external-service-ignored
+  namespace: istio-system
+spec:
+  hosts:
+    - www.ebay.de
+    - example.com
+    - foo.com
+  ports:
+    - name: https
+      number: 443
+      protocol: HTTPS
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  labels:
+    managed-by: istio-operator
   name: external-service
   namespace: istio-system
 spec:
