@@ -14,12 +14,13 @@ type LabelSelectorYAML struct {
 }
 
 type Config struct {
-	LogLevel      string                `yaml:"logLevel"`
-	Module        string                `yaml:"module"`
-	Interval      monitoringv1.Duration `yaml:"interval"`
-	ScrapeTimeout monitoringv1.Duration `yaml:"scrapeTimeout"`
-	TmpSelector   LabelSelectorYAML     `yaml:"selector"`
-	LabelSelector metav1.LabelSelector  // `yaml:"selector"`
+	LogLevel               string                `yaml:"logLevel"`
+	DefaultModule          string                `yaml:"defaultModule"`
+	Interval               monitoringv1.Duration `yaml:"interval"`
+	ScrapeTimeout          monitoringv1.Duration `yaml:"scrapeTimeout"`
+	TmpSelector            LabelSelectorYAML     `yaml:"selector"`
+	LabelSelector          metav1.LabelSelector  // `yaml:"selector"`
+	ProtocolModuleMappings map[string]string     `yaml:"protocolModuleMappings,omitempty"`
 }
 
 func LoadConfig(filePath string) (*Config, error) {
@@ -30,7 +31,7 @@ func LoadConfig(filePath string) (*Config, error) {
 
 	var config Config
 	// Default Values
-	config.Module = "http_2xx"
+	config.DefaultModule = "http_2xx"
 	config.LogLevel = "info"
 	config.ScrapeTimeout = "30s"
 	config.Interval = "30s"
@@ -48,7 +49,7 @@ func LoadConfig(filePath string) (*Config, error) {
 			MatchExpressions: nil,
 		}
 	}
-	fmt.Println(config.LabelSelector, len(config.LabelSelector.MatchLabels), len(config.LabelSelector.MatchExpressions))
+	//fmt.Println(config.LabelSelector, len(config.LabelSelector.MatchLabels), len(config.LabelSelector.MatchExpressions))
 
 	if err != nil {
 		return nil, fmt.Errorf("error parsing YAML: %w", err)

@@ -1,7 +1,14 @@
 # blackbox-operator
 [![Docker Pulls](https://img.shields.io/docker/pulls/schmiddim/spacelift-pushgateway.svg)](https://hub.docker.com/r/schmiddim/blackbox-operator)
 
+
+## Todos
+- verknuefpung auf die servicemonitore
+- auf veraenderungen der servicemonitore reagieren
+- naming pattern
 // TODO(user): Add simple overview of use/purpose
+
+
 
 ## Description
 // TODO(user): An in-depth paragraph about your project and overview of use

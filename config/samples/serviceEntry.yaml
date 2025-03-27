@@ -14,3 +14,18 @@ spec:
     - name: https
       number: 443
       protocol: HTTPS
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-service-tcp
+  namespace: istio-system
+spec:
+  hosts:
+    - google.de
+  location: MESH_EXTERNAL
+  ports:
+    - name: tcp
+      number: 443
+      protocol: TCP
+  resolution: DNS

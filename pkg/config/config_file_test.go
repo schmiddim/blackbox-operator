@@ -12,12 +12,14 @@ import (
 // Test YAML data
 const testYAML = `
 logLevel: "debug"
-module: "http_test"
+defaultModule: "http_test"
 interval: "10s"
 scrapeTimeout: "5s"
 selector:
   matchLabels:
     app.kubernetes.io/name: "test-app"
+protocolModuleMappings:
+  TCP: tcp_connect
 `
 
 // Helper function to create a temporary YAML file
@@ -51,20 +53,21 @@ func TestLoadConfig(t *testing.T) {
 	// Expected values
 	expectedConfig := &Config{
 		LogLevel:      "debug",
-		Module:        "http_test",
+		DefaultModule: "http_test",
 		Interval:      monitoringv1.Duration("10s"),
 		ScrapeTimeout: monitoringv1.Duration("5s"),
 		LabelSelector: metav1.LabelSelector{
 			MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
 		},
+		ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
 	}
 
 	// Compare actual values with expected ones
 	if config.LogLevel != expectedConfig.LogLevel {
 		t.Errorf("Expected LogLevel: %s, got: %s", expectedConfig.LogLevel, config.LogLevel)
 	}
-	if config.Module != expectedConfig.Module {
-		t.Errorf("Expected Module: %s, got: %s", expectedConfig.Module, config.Module)
+	if config.DefaultModule != expectedConfig.DefaultModule {
+		t.Errorf("Expected DefaultModule: %s, got: %s", expectedConfig.DefaultModule, config.DefaultModule)
 	}
 	if config.Interval != expectedConfig.Interval {
 		t.Errorf("Expected Interval: %s, got: %s", expectedConfig.Interval, config.Interval)
@@ -74,6 +77,9 @@ func TestLoadConfig(t *testing.T) {
 	}
 	if !reflect.DeepEqual(config.LabelSelector, expectedConfig.LabelSelector) {
 		t.Errorf("Expected LabelSelector: %v, got: %v", expectedConfig.LabelSelector, config.LabelSelector)
+	}
+	if !reflect.DeepEqual(config.ProtocolModuleMappings, expectedConfig.ProtocolModuleMappings) {
+		t.Errorf("Expected LabelSelector: %v, got: %v", expectedConfig.ProtocolModuleMappings, config.ProtocolModuleMappings)
 	}
 }
 

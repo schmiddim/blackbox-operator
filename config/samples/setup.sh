@@ -10,7 +10,7 @@ helm upgrade --install istio-base istio/base -n istio-system --set defaultRevisi
 helm upgrade --install istiod istio/istiod -n istio-system --wait
 
 # blackbox exporter
-helm upgrade --install blackbox-exporter -n prometheus  prometheus-community/prometheus-blackbox-exporter  --create-namespace
+helm upgrade --install blackbox-exporter -n prometheus  prometheus-community/prometheus-blackbox-exporter  --create-namespace -f blackbox-values.yaml
 
 # prometheus
 

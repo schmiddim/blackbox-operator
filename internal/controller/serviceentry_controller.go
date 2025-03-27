@@ -83,7 +83,7 @@ func (r *ServiceEntryReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	logger.Info("ServiceEntry detected/modified", "name", se.Name, "namespace", se.Namespace)
 
 	// Generate the desired ServiceMonitor based on the ServiceEntry
-	smm := monitoring.NewServiceMonitorMapper(r.Config)
+	smm := monitoring.NewServiceMonitorMapper(r.Config, &logger)
 	sm := smm.MapperForService(&se)
 
 	existingSM := &monitoringv1.ServiceMonitor{}

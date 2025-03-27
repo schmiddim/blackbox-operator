@@ -1,7 +1,9 @@
 logLevel: "info"
-module: "http_002xx"
-interval: "2s"
+interval: "30s"
 scrapeTimeout: "1s"
 selector:
   matchLabels:
-    app.kubernetes.io/instance: blackbox-exporter-default-config
+    app.kubernetes.io/instance: blackbox-exporter
+defaultModule: http_2xx
+protocolModuleMappings:
+  TCP: tcp_connect
