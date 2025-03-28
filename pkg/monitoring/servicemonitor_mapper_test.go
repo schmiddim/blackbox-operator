@@ -78,6 +78,11 @@ func TestModuleForProtocol(t *testing.T) {
 			expectedModule: "tcp_connect",
 		},
 		{
+			name:           "TCP Protocol not upper case",
+			servicePort:    v1alpha3.ServicePort{Number: 9093, Name: "tcp", Protocol: "TcP"},
+			expectedModule: "tcp_connect",
+		},
+		{
 			name:           "Back to default",
 			servicePort:    v1alpha3.ServicePort{Number: 9093, Name: "heinzi", Protocol: "HTTPS"},
 			expectedModule: cfg.DefaultModule,

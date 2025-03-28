@@ -8,6 +8,7 @@ import (
 	"istio.io/api/networking/v1alpha3"
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 type ServiceMonitorMapper struct {
@@ -33,7 +34,7 @@ func (smm *ServiceMonitorMapper) getHost(host string, port *v1alpha3.ServicePort
 func (smm *ServiceMonitorMapper) getModuleForProtocol(port *v1alpha3.ServicePort) string {
 
 	for protocol, module := range smm.config.ProtocolModuleMappings {
-		if port.Protocol == protocol {
+		if strings.ToUpper(port.Protocol) == strings.ToUpper(protocol) {
 			return module
 		}
 	}
