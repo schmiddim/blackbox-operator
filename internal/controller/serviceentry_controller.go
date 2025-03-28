@@ -21,11 +21,10 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
 	"github.com/schmiddim/blackbox-operator/pkg/monitoring"
-	"reflect"
-
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -38,9 +37,9 @@ type ServiceEntryReconciler struct {
 	Config *config.Config
 }
 
-// +kubebuilder:rbac:groups=networking.example.com,resources=serviceentries,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=networking.example.com,resources=serviceentries/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=networking.example.com,resources=serviceentries/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=create;list;get;update;patch;delete;watch
+// +kubebuilder:rbac:groups=networking.istio.io,resources=serviceentries,verbs=create;list;get;watch
+// +kubebuilder:rbac:groups=monitoring.coreos.com/v1,resources=servicemonitors,verbs=create;list;get;update;patch;delete;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -53,15 +52,19 @@ type ServiceEntryReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.0/pkg/reconcile
 func (r *ServiceEntryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-
+	smm := monitoring.NewServiceMonitorMapper(r.Config, &logger)
+	exclude := monitoring.NewExcluded(r.Config)
 	// Try to fetch the ServiceEntry
 	var se istioNetworking.ServiceEntry
 	if err := r.Get(ctx, req.NamespacedName, &se); err != nil {
 		if errors.IsNotFound(err) {
 			// ServiceEntry was deleted → Delete the associated ServiceMonitor
-			smName := "sm-" + req.Name
+			smName, err := smm.GetNameForServiceMonitor(req.Name)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
 			sm := &monitoringv1.ServiceMonitor{}
-			err := r.Get(ctx, client.ObjectKey{Name: smName, Namespace: req.Namespace}, sm)
+			err = r.Get(ctx, client.ObjectKey{Name: smName, Namespace: req.Namespace}, sm)
 			if err == nil {
 				// Delete the ServiceMonitor if it exists
 				err = r.Delete(ctx, sm)
@@ -81,13 +84,6 @@ func (r *ServiceEntryReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	logger.Info("ServiceEntry detected/modified", "name", se.Name, "namespace", se.Namespace)
-	smm := monitoring.NewServiceMonitorMapper(r.Config, &logger)
-	exclude := monitoring.NewExcluded(r.Config)
-
-	if exclude.IsExcluded(se.ObjectMeta.Labels) {
-		logger.Info("No ServiceMonitor created because of ExcludeRules", "name", se.Name, "namespace", se.Namespace)
-		return ctrl.Result{}, nil
-	}
 
 	// Generate the desired ServiceMonitor based on the ServiceEntry
 	sm := smm.MapperForService(&se)
@@ -95,7 +91,19 @@ func (r *ServiceEntryReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	existingSM := &monitoringv1.ServiceMonitor{}
 	err := r.Get(ctx, client.ObjectKey{Name: sm.Name, Namespace: sm.Namespace}, existingSM)
 
-	if err != nil && errors.IsNotFound(err) {
+	if exclude.IsExcluded(se.ObjectMeta.Labels) {
+		logger.Info("No ServiceMonitor created because of ExcludeRules", "name", se.Name, "namespace", se.Namespace)
+		if err == nil && errors.IsNotFound(err) == false {
+			logger.Info("Service Monitor exists and will be deleted", "name", existingSM.Name, "namespace", existingSM.Namespace)
+			err := r.Delete(ctx, existingSM)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
+	if err != nil && errors.IsNotFound(err) && exclude.IsExcluded(se.ObjectMeta.Labels) == false {
 		// ServiceMonitor does not exist Create it
 		err = r.Create(ctx, sm)
 		if err != nil {
@@ -119,7 +127,6 @@ func (r *ServiceEntryReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	} else {
 		return ctrl.Result{}, err
 	}
-
 	return ctrl.Result{}, nil
 }
 

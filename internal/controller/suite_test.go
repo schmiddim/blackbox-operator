@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"path/filepath"
 	"runtime"
@@ -77,6 +78,8 @@ var _ = BeforeSuite(func() {
 	Expect(cfg).NotTo(BeNil())
 
 	err = istioNetworking.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = monitoringv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme

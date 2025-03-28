@@ -15,15 +15,16 @@ type LabelSelectorYAML struct {
 }
 
 type Config struct {
-	LogLevel               string                `yaml:"logLevel"`
-	DefaultModule          string                `yaml:"defaultModule"`
-	Interval               monitoringv1.Duration `yaml:"interval"`
-	ScrapeTimeout          monitoringv1.Duration `yaml:"scrapeTimeout"`
-	TmpSelector            LabelSelectorYAML     `yaml:"selector"`
-	LabelSelector          metav1.LabelSelector  // `yaml:"selector"`
-	TmpExclude             LabelSelectorYAML     `yaml:"exclude"`
-	ExcludeSelector        metav1.LabelSelector
-	ProtocolModuleMappings map[string]string `yaml:"protocolModuleMappings,omitempty"`
+	LogLevel                    string                `yaml:"logLevel"`
+	DefaultModule               string                `yaml:"defaultModule"`
+	ServiceMonitorNamingPattern string                `yaml:"serviceMonitorNamingPattern"`
+	Interval                    monitoringv1.Duration `yaml:"interval"`
+	ScrapeTimeout               monitoringv1.Duration `yaml:"scrapeTimeout"`
+	TmpSelector                 LabelSelectorYAML     `yaml:"selector"`
+	LabelSelector               metav1.LabelSelector
+	TmpExclude                  LabelSelectorYAML `yaml:"exclude"`
+	ExcludeSelector             metav1.LabelSelector
+	ProtocolModuleMappings      map[string]string `yaml:"protocolModuleMappings,omitempty"`
 }
 
 func LoadConfig(filePath string) (*Config, error) {

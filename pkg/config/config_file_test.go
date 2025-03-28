@@ -15,6 +15,7 @@ logLevel: "debug"
 defaultModule: "http_test"
 interval: "10s"
 scrapeTimeout: "5s"
+serviceMonitorNamingPattern: "sm-%"
 selector:
   matchLabels:
     app.kubernetes.io/name: "test-app"
@@ -55,10 +56,11 @@ func TestLoadConfig(t *testing.T) {
 
 	// Expected values
 	expectedConfig := &Config{
-		LogLevel:      "debug",
-		DefaultModule: "http_test",
-		Interval:      monitoringv1.Duration("10s"),
-		ScrapeTimeout: monitoringv1.Duration("5s"),
+		LogLevel:                    "debug",
+		DefaultModule:               "http_test",
+		ServiceMonitorNamingPattern: "sm-%",
+		Interval:                    monitoringv1.Duration("10s"),
+		ScrapeTimeout:               monitoringv1.Duration("5s"),
 		LabelSelector: metav1.LabelSelector{
 			MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
 		},
@@ -66,6 +68,9 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	// Compare actual values with expected ones
+	if config.ServiceMonitorNamingPattern != expectedConfig.ServiceMonitorNamingPattern {
+		t.Errorf("Expected LogLevel: %s, got: %s", expectedConfig.ServiceMonitorNamingPattern, config.ServiceMonitorNamingPattern)
+	}
 	if config.LogLevel != expectedConfig.LogLevel {
 		t.Errorf("Expected LogLevel: %s, got: %s", expectedConfig.LogLevel, config.LogLevel)
 	}

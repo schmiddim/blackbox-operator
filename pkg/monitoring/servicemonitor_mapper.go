@@ -1,6 +1,7 @@
 package monitoring
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -21,6 +22,16 @@ func NewServiceMonitorMapper(cfg *config.Config, log *logr.Logger) *ServiceMonit
 		config: cfg,
 		log:    log,
 	}
+}
+
+func (smm *ServiceMonitorMapper) GetNameForServiceMonitor(ServiceEntryName string) (string, error) {
+
+	count := strings.Count(smm.config.ServiceMonitorNamingPattern, "%s")
+	if count != 1 {
+		return "", errors.New("ServiceMonitorNamingPattern must contain 1 %s")
+	}
+	name := fmt.Sprintf(smm.config.ServiceMonitorNamingPattern, ServiceEntryName)
+	return name, nil
 }
 
 func (smm *ServiceMonitorMapper) getHost(host string, port *v1alpha3.ServicePort) string {

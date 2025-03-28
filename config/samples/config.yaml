@@ -1,6 +1,7 @@
 logLevel: "info"
 interval: "30s"
 scrapeTimeout: "1s"
+serviceMonitorNamingPattern: "sm-%"
 selector:
   matchLabels:
     app.kubernetes.io/instance: blackbox-exporter

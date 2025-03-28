@@ -10,16 +10,35 @@ import (
 
 func getCfg() config.Config {
 	return config.Config{
-		LogLevel:      "debug",
-		DefaultModule: "http_test",
-		Interval:      "10s",
-		ScrapeTimeout: "5s",
+		LogLevel:                    "debug",
+		DefaultModule:               "http_test",
+		ServiceMonitorNamingPattern: "buah-%s",
+		Interval:                    "10s",
+		ScrapeTimeout:               "5s",
 		LabelSelector: metav1.LabelSelector{
 			MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
 		},
 		ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
 	}
 }
+func TestNamingPattern(t *testing.T) {
+	cfg := getCfg()
+	logger := logr.Logger{}
+	mapper := NewServiceMonitorMapper(&cfg, &logger)
+
+	got, _ := mapper.GetNameForServiceMonitor("hansi")
+	want := "buah-hansi"
+	if got != want {
+		t.Errorf("expected %s, got %s", want, got)
+	}
+
+	cfg.ServiceMonitorNamingPattern = "invalid"
+	_, err := mapper.GetNameForServiceMonitor("hansi")
+	if err == nil {
+		t.Errorf("expected %s, got %s", err, "nil")
+	}
+}
+
 func TestModuleForHost(t *testing.T) {
 	cfg := getCfg()
 	logger := logr.Logger{}
