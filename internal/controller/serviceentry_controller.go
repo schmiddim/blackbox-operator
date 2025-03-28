@@ -83,16 +83,12 @@ func (r *ServiceEntryReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	logger.Info("ServiceEntry detected/modified", "name", se.Name, "namespace", se.Namespace)
 	smm := monitoring.NewServiceMonitorMapper(r.Config, &logger)
 	exclude := monitoring.NewExcluded(r.Config)
-	if se.Name == "external-service-ignored" {
 
-		if exclude.IsExcluded(se.ObjectMeta.Labels) {
-			logger.Info("No ServiceMonitor created because of ExcludeRules", "name", se.Name, "namespace", se.Namespace)
-			return ctrl.Result{}, nil
-		}
-
+	if exclude.IsExcluded(se.ObjectMeta.Labels) {
+		logger.Info("No ServiceMonitor created because of ExcludeRules", "name", se.Name, "namespace", se.Namespace)
 		return ctrl.Result{}, nil
-
 	}
+
 	// Generate the desired ServiceMonitor based on the ServiceEntry
 	sm := smm.MapperForService(&se)
 
