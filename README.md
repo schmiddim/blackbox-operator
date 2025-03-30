@@ -1,4 +1,5 @@
 # blackbox-operator
+[![codecov](https://codecov.io/gh/schmiddim/spacelift-pushgateway/graph/badge.svg?token=lxCOCj9JPi)](https://codecov.io/gh/schmiddim/blackbox-operator)
 [![Docker Pulls](https://img.shields.io/docker/pulls/schmiddim/spacelift-pushgateway.svg)](https://hub.docker.com/r/schmiddim/blackbox-operator)
 
 
