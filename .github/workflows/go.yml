@@ -8,12 +8,21 @@ jobs:
     name: Build & Test the Application
     runs-on: ubuntu-latest
     steps:
+      - uses: shivanshs9/setup-k8s-operator-sdk@v1
+        with:
+          version: '^1.39.2'
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
           go-version: '1.23.0'
+      - name: Create temp directory and run operator-sdk init
+        run: |
+          TMP_DIR=$(mktemp -d)
+          cd $TMP_DIR
+          operator-sdk init --domain example.com --repo github.com/example/repo
+          cp -r $TMP_DIR/bin $GITHUB_WORKSPACE/ && ls $GITHUB_WORKSPACE/bin
 #      - name: Tidy Go modules
 #        run: |
 #          go mod tidy
