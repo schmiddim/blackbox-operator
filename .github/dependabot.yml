@@ -9,6 +9,9 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "golang"
+        versions: [ "> 1.23.x" ]
   - package-ecosystem: github-actions
     directory: /
     schedule:
