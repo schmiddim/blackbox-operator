@@ -23,7 +23,7 @@ jobs:
         run: |
           TMP_DIR=$(mktemp -d)
           cd $TMP_DIR
-          operator-sdk init --domain example.com --repo github.com/example/repo
+          operator-sdk init --domain example.com --repo github.com/example/repo  --project-name foo
           cp -r $TMP_DIR/bin $GITHUB_WORKSPACE/ && ls $GITHUB_WORKSPACE/bin
 #      - name: Tidy Go modules
 #        run: |
