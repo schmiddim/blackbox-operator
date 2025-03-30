@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"regexp"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +15,14 @@ type LabelSelectorYAML struct {
 	MatchExpressions []metav1.LabelSelectorRequirement `yaml:"matchExpressions,omitempty"`
 }
 
+type HostMapping struct {
+	ServiceEntryName string         `yaml:"serviceEntryName,omitempty"`
+	Host             string         `yaml:"host,omitempty"`
+	Port             string         `yaml:"port,omitempty"`
+	ReplacePattern   *regexp.Regexp `yaml:"replacePattern"`
+	ReplaceWith      string         `yaml:"replaceWith"`
+}
+
 type Config struct {
 	LogLevel                    string                `yaml:"logLevel"`
 	DefaultModule               string                `yaml:"defaultModule"`
@@ -21,8 +30,9 @@ type Config struct {
 	Interval                    monitoringv1.Duration `yaml:"interval"`
 	ScrapeTimeout               monitoringv1.Duration `yaml:"scrapeTimeout"`
 	TmpSelector                 LabelSelectorYAML     `yaml:"selector"`
+	HostMappings                []HostMapping         `yaml:"hostMappings,omitempty"`
 	LabelSelector               metav1.LabelSelector
-	TmpExclude                  LabelSelectorYAML `yaml:"exclude"`
+	TmpExclude                  LabelSelectorYAML `yaml:"exclude,omitempty"`
 	ExcludeSelector             metav1.LabelSelector
 	ProtocolModuleMappings      map[string]string `yaml:"protocolModuleMappings,omitempty"`
 }

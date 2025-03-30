@@ -2,8 +2,10 @@ package monitoring
 
 import (
 	"github.com/go-logr/logr"
+	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
 	"istio.io/api/networking/v1alpha3"
+	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
@@ -21,6 +23,63 @@ func getCfg() config.Config {
 		ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
 	}
 }
+
+func TestServiceMonitorMapper(t *testing.T) {
+
+	cfg := getCfg()
+	logger := logr.Logger{}
+	mapper := NewServiceMonitorMapper(&cfg, &logger)
+
+	tests := []*struct {
+		name           string
+		serviceMonitor v1.ServiceMonitor
+		serviceEntry   istioNetworking.ServiceEntry
+		config         config.Config
+	}{
+
+		{
+			name: "SmokeTest",
+			serviceMonitor: v1.ServiceMonitor{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "sm-example-entry",
+					Labels: nil,
+				},
+			},
+			config: getCfg(),
+			serviceEntry: istioNetworking.ServiceEntry{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{Name: "example-entry"},
+				Spec: v1alpha3.ServiceEntry{
+					Hosts: []string{
+						"www.example.com",
+					},
+					//Addresses:        nil,
+					Ports: []*v1alpha3.ServicePort{{
+						Number:   443,
+						Protocol: "https",
+						Name:     "https",
+					}},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		sm := mapper.MapperForService(&test.serviceEntry)
+		if test.name == "smokeTest" {
+			want := "sm-example-entry"
+			got := sm.Name
+			if got != want {
+				t.Errorf("expected %s, got %s", want, got)
+			}
+
+			if len(sm.Spec.Endpoints) != 1 {
+				t.Errorf("expected 1 endpoints, got %d", len(sm.Spec.Endpoints))
+			}
+		}
+	}
+}
+
 func TestNamingPattern(t *testing.T) {
 	cfg := getCfg()
 	logger := logr.Logger{}
