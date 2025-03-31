@@ -21,6 +21,11 @@ selector:
     app.kubernetes.io/name: "test-app"
 protocolModuleMappings:
   TCP: tcp_connect
+hostMappings:
+  - host: www.ebay.com
+    port: 443
+    replacePattern: www.ebay.com
+    replaceWith: www.ebay.com/health
 exclude:
   matchLabels:
     blackbox-operator-scrape: false
@@ -64,6 +69,12 @@ func TestLoadConfig(t *testing.T) {
 		LabelSelector: metav1.LabelSelector{
 			MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
 		},
+		HostMappings: []HostMapping{{
+			Host:           "www.ebay.com",
+			Port:           443,
+			ReplacePattern: "www.ebay.com",
+			ReplaceWith:    "www.ebay.com/health",
+		}},
 		ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
 	}
 
@@ -84,10 +95,14 @@ func TestLoadConfig(t *testing.T) {
 		t.Errorf("Expected ScrapeTimeout: %s, got: %s", expectedConfig.ScrapeTimeout, config.ScrapeTimeout)
 	}
 	if !reflect.DeepEqual(config.LabelSelector, expectedConfig.LabelSelector) {
-		t.Errorf("Expected LabelSelector: %v, got: %v", expectedConfig.LabelSelector, config.LabelSelector)
+		t.Errorf("Expected LabelSelector:'%v', got: '%v'", expectedConfig.LabelSelector, config.LabelSelector)
 	}
 	if !reflect.DeepEqual(config.ProtocolModuleMappings, expectedConfig.ProtocolModuleMappings) {
-		t.Errorf("Expected LabelSelector: %v, got: %v", expectedConfig.ProtocolModuleMappings, config.ProtocolModuleMappings)
+		t.Errorf("Expected LabelSelector:'%v', got: '%v'", expectedConfig.ProtocolModuleMappings, config.ProtocolModuleMappings)
+	}
+	if !reflect.DeepEqual(config.HostMappings, expectedConfig.HostMappings) {
+		t.Errorf("Expected HostMappings:'%v', got: '%v'", expectedConfig.HostMappings, config.HostMappings)
+
 	}
 }
 func TestExcludeSelector(t *testing.T) {

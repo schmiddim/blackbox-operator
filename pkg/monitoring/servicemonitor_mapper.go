@@ -34,14 +34,6 @@ func (smm *ServiceMonitorMapper) GetNameForServiceMonitor(ServiceEntryName strin
 	return name, nil
 }
 
-func (smm *ServiceMonitorMapper) getHost(host string, port *v1alpha3.ServicePort) string {
-
-	host = fmt.Sprintf("%s:%d", host, port.Number)
-	if port.GetProtocol() == "HTTPS" {
-		host = fmt.Sprintf("https://%s", host)
-	}
-	return host
-}
 func (smm *ServiceMonitorMapper) getModuleForProtocol(port *v1alpha3.ServicePort) string {
 
 	for protocol, module := range smm.config.ProtocolModuleMappings {
@@ -56,8 +48,15 @@ func (smm *ServiceMonitorMapper) getModuleForProtocol(port *v1alpha3.ServicePort
 
 func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1alpha3.ServicePort) []monitoringv1.Endpoint {
 	var endpoints []monitoringv1.Endpoint
+	replace := NewReplace(smm.config)
 	for _, port := range ports {
+
 		for _, host := range hosts {
+
+			hostWithPort := replace.GetModifiedHostname(host, port)
+			if strings.ToUpper(port.GetProtocol()) == "HTTPS" {
+				hostWithPort = fmt.Sprintf("https://%s", hostWithPort)
+			}
 			e := monitoringv1.Endpoint{
 				Interval:      smm.config.Interval,
 				Port:          "http",
@@ -65,8 +64,8 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 				Path:          "/probe",
 				ScrapeTimeout: smm.config.ScrapeTimeout,
 				Params: map[string][]string{
-					"module": {smm.getModuleForProtocol(port)},
-					"target": {smm.getHost(host, port)},
+					"module": {host},
+					"target": {hostWithPort},
 				},
 				RelabelConfigs: []monitoringv1.RelabelConfig{
 					{
@@ -95,9 +94,6 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 }
 
 func (smm *ServiceMonitorMapper) MapperForService(se *istioNetworking.ServiceEntry) *monitoringv1.ServiceMonitor {
-
-	// Modify Host to Host & Port if required
-
 	sm := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "sm-" + se.Name,

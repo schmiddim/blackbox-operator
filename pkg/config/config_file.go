@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"regexp"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,11 +15,11 @@ type LabelSelectorYAML struct {
 }
 
 type HostMapping struct {
-	ServiceEntryName string         `yaml:"serviceEntryName,omitempty"`
-	Host             string         `yaml:"host,omitempty"`
-	Port             string         `yaml:"port,omitempty"`
-	ReplacePattern   *regexp.Regexp `yaml:"replacePattern"`
-	ReplaceWith      string         `yaml:"replaceWith"`
+	ServiceEntryName string `yaml:"serviceEntryName,omitempty"`
+	Host             string `yaml:"host,omitempty"`
+	Port             uint32 `yaml:"port,omitempty"`
+	ReplacePattern   string `yaml:"replacePattern"`
+	ReplaceWith      string `yaml:"replaceWith"`
 }
 
 type Config struct {
