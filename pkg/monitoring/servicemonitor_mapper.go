@@ -64,7 +64,7 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 				Path:          "/probe",
 				ScrapeTimeout: smm.config.ScrapeTimeout,
 				Params: map[string][]string{
-					"module": {host},
+					"module": {smm.getModuleForProtocol(port)},
 					"target": {hostWithPort},
 				},
 				RelabelConfigs: []monitoringv1.RelabelConfig{

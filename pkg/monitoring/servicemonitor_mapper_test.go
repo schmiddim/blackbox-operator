@@ -154,10 +154,11 @@ func TestModuleForHost(t *testing.T) {
 	logger := logr.Logger{}
 	mapper := NewServiceMonitorMapper(&cfg, &logger)
 	tests := []*struct {
-		name         string
-		host         string
-		servicePort  v1alpha3.ServicePort
-		expectedHost string
+		name           string
+		host           string
+		servicePort    v1alpha3.ServicePort
+		expectedHost   string
+		expectedModule string
 	}{
 		{
 			name: "HTTPS with port 9093",
@@ -167,7 +168,8 @@ func TestModuleForHost(t *testing.T) {
 				Protocol: "HTTPS",
 				Name:     "tcp",
 			},
-			expectedHost: "https://google.de:9093",
+			expectedHost:   "https://google.de:9093",
+			expectedModule: cfg.DefaultModule,
 		},
 		{
 			name: "no Protocol",
@@ -177,7 +179,8 @@ func TestModuleForHost(t *testing.T) {
 				Protocol: "UNKNOWN",
 				Name:     "unknown",
 			},
-			expectedHost: "test.com:8080",
+			expectedHost:   "test.com:8080",
+			expectedModule: cfg.DefaultModule,
 		},
 	}
 
@@ -199,6 +202,13 @@ func TestModuleForHost(t *testing.T) {
 			if got != tt.expectedHost {
 				t.Errorf("expected %s, got %s", tt.expectedHost, got)
 			}
+
+			//module test
+			gotModule := sm.Spec.Endpoints[0].Params["module"][0]
+			if gotModule != tt.expectedModule {
+				t.Errorf("expected %s, got %s", tt.expectedModule, gotModule)
+			}
+
 		})
 	}
 }
