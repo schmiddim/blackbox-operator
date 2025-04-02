@@ -3,6 +3,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     managed-by: blackbox-operator
+    for: external-service
   name: sm-external-service
   namespace: istio-system
 spec:

@@ -100,6 +100,7 @@ func (smm *ServiceMonitorMapper) MapperForService(se *istioNetworking.ServiceEnt
 			Namespace: se.Namespace,
 			Labels: map[string]string{
 				"managed-by": "blackbox-operator",
+				"for":        se.Name,
 			},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
