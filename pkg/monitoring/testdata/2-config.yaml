@@ -1,7 +1,7 @@
 ---
 logLevel: "info"
-interval: "77s"
-scrapeTimeout: "44s"
+interval: "30s"
+scrapeTimeout: "1s"
 serviceMonitorNamingPattern: "sm-%"
 selector:
   matchLabels:

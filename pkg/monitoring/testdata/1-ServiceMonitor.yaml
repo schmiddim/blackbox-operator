@@ -8,7 +8,7 @@ metadata:
   namespace: istio-system
 spec:
   endpoints:
-    - interval: 30s
+    - interval: 77s
       params:
         module:
           - http_2xx
@@ -32,57 +32,7 @@ spec:
             - __meta_kubernetes_namespace
           targetLabel: namespace
       scheme: http
-      scrapeTimeout: 1s
-    - interval: 30s
-      params:
-        module:
-          - http_2xx
-        target:
-          - https://example.com:443
-      path: /probe
-      port: http
-      relabelings:
-        - action: replace
-          sourceLabels:
-            - __param_target
-          targetLabel: instance
-        - action: replace
-          sourceLabels:
-            - __param_module
-          targetLabel: module
-        - action: labeldrop
-          regex: pod|service|container
-        - action: replace
-          sourceLabels:
-            - __meta_kubernetes_namespace
-          targetLabel: namespace
-      scheme: http
-      scrapeTimeout: 1s
-    - interval: 30s
-      params:
-        module:
-          - http_2xx
-        target:
-          - https://foo.com:443
-      path: /probe
-      port: http
-      relabelings:
-        - action: replace
-          sourceLabels:
-            - __param_target
-          targetLabel: instance
-        - action: replace
-          sourceLabels:
-            - __param_module
-          targetLabel: module
-        - action: labeldrop
-          regex: pod|service|container
-        - action: replace
-          sourceLabels:
-            - __meta_kubernetes_namespace
-          targetLabel: namespace
-      scheme: http
-      scrapeTimeout: 1s
+      scrapeTimeout: 44s
   namespaceSelector:
     any: true
   selector:

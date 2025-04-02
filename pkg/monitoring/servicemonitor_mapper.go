@@ -71,10 +71,12 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 					{
 						SourceLabels: []monitoringv1.LabelName{"__param_target"},
 						TargetLabel:  "instance",
+						Action:       "replace",
 					},
 					{
 						SourceLabels: []monitoringv1.LabelName{"__param_module"},
 						TargetLabel:  "module",
+						Action:       "replace",
 					},
 					{
 						Action: "labeldrop",
@@ -83,6 +85,7 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 					{
 						SourceLabels: []monitoringv1.LabelName{"__meta_kubernetes_namespace"},
 						TargetLabel:  "namespace",
+						Action:       "replace",
 					},
 				},
 			}
