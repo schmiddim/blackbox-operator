@@ -9,6 +9,7 @@ import (
 	"istio.io/api/networking/v1alpha3"
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strconv"
 	"strings"
 )
 
@@ -45,12 +46,22 @@ func (smm *ServiceMonitorMapper) getModuleForProtocol(port *v1alpha3.ServicePort
 	smm.log.Info(fmt.Sprintf("No module for protocol %s - configuring Default (%s)", port.Protocol, smm.config.DefaultModule))
 	return smm.config.DefaultModule
 }
+func (smm *ServiceMonitorMapper) isPortIgnored(port *v1alpha3.ServicePort, labels map[string]string) bool {
+	for key, value := range labels {
+		if key == "skip-probe-for-port" && value == strconv.FormatUint(uint64(port.Number), 10) {
+			return true
+		}
 
-func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1alpha3.ServicePort) []monitoringv1.Endpoint {
+	}
+	return false
+}
+func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1alpha3.ServicePort, labels map[string]string) []monitoringv1.Endpoint {
 	var endpoints []monitoringv1.Endpoint
 	replace := NewReplace(smm.config)
 	for _, port := range ports {
-
+		if smm.isPortIgnored(port, labels) {
+			continue
+		}
 		for _, host := range hosts {
 
 			hostWithPort := replace.GetModifiedHostname(host, port)
@@ -112,7 +123,7 @@ func (smm *ServiceMonitorMapper) MapperForService(se *istioNetworking.ServiceEnt
 			},
 
 			Selector:  smm.config.LabelSelector,
-			Endpoints: smm.generateEndpoints(se.Spec.Hosts, se.Spec.Ports),
+			Endpoints: smm.generateEndpoints(se.Spec.Hosts, se.Spec.Ports, se.ObjectMeta.Labels),
 		},
 	}
 

@@ -7,11 +7,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
-	yaml "sigs.k8s.io/yaml/goyaml.v3"
 	"istio.io/api/networking/v1alpha3"
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
+	yaml "sigs.k8s.io/yaml/goyaml.v3"
 	"testing"
 )
 
@@ -92,15 +92,21 @@ func TestLoadFromFS(t *testing.T) {
 		{
 			name:                 "Smoke Test",
 			configFileName:       "./testdata/1-config.yaml",
-			serviceEntryFilename: "./testdata/1-ServiceEntry.yaml",
-			serviceEntryMonitor:  "./testdata/1-ServiceMonitor.yaml",
+			serviceEntryFilename: "./testdata/1-service-entry.yaml",
+			serviceEntryMonitor:  "./testdata/1-service-monitor.yaml",
 		},
-		//{
-		//	name:                 "Skip Probe by Port",
-		//	configFileName:       "./testdata/2-config.yaml",
-		//	serviceEntryFilename: "./testdata/2-ServiceEntry.yaml",
-		//	serviceEntryMonitor:  "./testdata/2-ServiceMonitor.yaml",
-		//},
+		{
+			name:                 "No Probe for Port",
+			configFileName:       "./testdata/2-config.yaml",
+			serviceEntryFilename: "./testdata/2-service-entry.yaml",
+			serviceEntryMonitor:  "./testdata/2-service-monitor.yaml",
+		},
+		{
+			name:                 "Test Rewrite Urls by Regex",
+			configFileName:       "./testdata/3-config.yaml",
+			serviceEntryFilename: "./testdata/3-service-entry.yaml",
+			serviceEntryMonitor:  "./testdata/3-service-monitor.yaml",
+		},
 	}
 	for _, tt := range tests {
 		se, err := loadServiceEntryJson(tt.serviceEntryFilename)
@@ -134,77 +140,77 @@ func TestLoadFromFS(t *testing.T) {
 
 }
 
-//func TestServiceMonitorMapper(t *testing.T) {
-//
-//	tests := []*struct {
-//		name           string
-//		serviceMonitor v1.ServiceMonitor
-//		serviceEntry   istioNetworking.ServiceEntry
-//		config         config.Config
-//	}{
-//		{
-//			name: "HostReplaceTest",
-//			serviceMonitor: v1.ServiceMonitor{
-//				ObjectMeta: metav1.ObjectMeta{
-//					Name:   "sm-example-entry",
-//					Labels: nil,
-//				},
-//			},
-//			config: config.Config{
-//				LogLevel:                    "debug",
-//				DefaultModule:               "http_test",
-//				ServiceMonitorNamingPattern: "buah-%s",
-//				Interval:                    "10s",
-//				ScrapeTimeout:               "5s",
-//				HostMappings: []config.HostMapping{{
-//					//ServiceEntryName: "example-entry",
-//					Host:           "www.example.com",
-//					Port:           443,
-//					ReplacePattern: `www.example.com`,
-//					ReplaceWith:    "www.example.com/health",
-//				},
-//				},
-//				LabelSelector: metav1.LabelSelector{
-//					MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
-//				},
-//				ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
-//			},
-//			serviceEntry: istioNetworking.ServiceEntry{
-//				TypeMeta:   metav1.TypeMeta{},
-//				ObjectMeta: metav1.ObjectMeta{Name: "example-entry"},
-//				Spec: v1alpha3.ServiceEntry{
-//					Hosts: []string{
-//						"www.example.com",
-//					},
-//					//Addresses:        nil,
-//					Ports: []*v1alpha3.ServicePort{{
-//						Number:   443,
-//						Protocol: "htps",
-//						Name:     "ttps",
-//					}},
-//				},
-//			},
-//		},
-//	}
-//
-//	for _, test := range tests {
-//		logger := logr.Logger{}
-//		mapper := NewServiceMonitorMapper(&test.config, &logger)
-//		sm := mapper.MapperForService(&test.serviceEntry)
-//		if test.name == "HostReplaceTest" {
-//			if len(sm.Spec.Endpoints) != 1 {
-//				t.Errorf("expected 1 endpoints, got %d", len(sm.Spec.Endpoints))
-//			}
-//
-//			got := sm.Spec.Endpoints[0].Params["target"][0]
-//			want := "www.example.com:443/health"
-//			if got != want {
-//				t.Errorf("expected %s, got %s", want, got)
-//			}
-//		}
-//
-//	}
-//}
+func TestServiceMonitorMapper(t *testing.T) {
+
+	tests := []*struct {
+		name           string
+		serviceMonitor v1.ServiceMonitor
+		serviceEntry   istioNetworking.ServiceEntry
+		config         config.Config
+	}{
+		{
+			name: "HostReplaceTest",
+			serviceMonitor: v1.ServiceMonitor{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "sm-example-entry",
+					Labels: nil,
+				},
+			},
+			config: config.Config{
+				LogLevel:                    "debug",
+				DefaultModule:               "http_test",
+				ServiceMonitorNamingPattern: "buah-%s",
+				Interval:                    "10s",
+				ScrapeTimeout:               "5s",
+				HostMappings: []config.HostMapping{{
+					//ServiceEntryName: "example-entry",
+					Host:           "www.example.com",
+					Port:           443,
+					ReplacePattern: `www.example.com`,
+					ReplaceWith:    "www.example.com/health",
+				},
+				},
+				LabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
+				},
+				ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
+			},
+			serviceEntry: istioNetworking.ServiceEntry{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{Name: "example-entry"},
+				Spec: v1alpha3.ServiceEntry{
+					Hosts: []string{
+						"www.example.com",
+					},
+					//Addresses:        nil,
+					Ports: []*v1alpha3.ServicePort{{
+						Number:   443,
+						Protocol: "htps",
+						Name:     "ttps",
+					}},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		logger := logr.Logger{}
+		mapper := NewServiceMonitorMapper(&test.config, &logger)
+		sm := mapper.MapperForService(&test.serviceEntry)
+		if test.name == "HostReplaceTest" {
+			if len(sm.Spec.Endpoints) != 1 {
+				t.Errorf("expected 1 endpoints, got %d", len(sm.Spec.Endpoints))
+			}
+
+			got := sm.Spec.Endpoints[0].Params["target"][0]
+			want := "www.example.com:443/health"
+			if got != want {
+				t.Errorf("expected %s, got %s", want, got)
+			}
+		}
+
+	}
+}
 
 func TestNamingPattern(t *testing.T) {
 	cfg := getCfg()

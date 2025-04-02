@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  labels:
+    managed-by: istio-operator
+  name: external-service-regex-rewrite
+  namespace: istio-system
+spec:
+  hosts:
+    - dex.sys.ehyp.acc.example-azure.de
+    - dex.sys.core.dev.example-cloud.de
+    - dex.sys.ehyp.dev.example-cloud.de
+    - dex.sys.sandbox.dev.example-cloud.de
+    - dex.sys.core.mgmt.example-cloud.de
+    - dex.sys.ehyp.prod.example-cloud.de
+  ports:
+    - name: https
+      number: 443
+      protocol: HTTPS

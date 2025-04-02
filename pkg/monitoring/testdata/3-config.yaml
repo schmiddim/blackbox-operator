@@ -1,0 +1,18 @@
+---
+logLevel: "info"
+interval: "30s"
+scrapeTimeout: "1s"
+serviceMonitorNamingPattern: "sm-%"
+hostMappings:
+  - port: 443
+    replacePattern: dex.sys.
+    replaceWith: dex.sys.*/healthz
+selector:
+  matchLabels:
+    app.kubernetes.io/instance: blackbox-exporter
+exclude:
+  matchLabels:
+    blackbox-operator-scrape: "false"
+defaultModule: http_2xx
+protocolModuleMappings:
+  TCP: tcp_connect
