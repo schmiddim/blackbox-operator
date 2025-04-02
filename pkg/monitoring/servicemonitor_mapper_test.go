@@ -7,11 +7,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
-	yaml "sigs.k8s.io/yaml/goyaml.v3"
 	"istio.io/api/networking/v1alpha3"
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
+	yaml "sigs.k8s.io/yaml/goyaml.v3"
 	"testing"
 )
 
@@ -89,18 +89,18 @@ func TestLoadFromFS(t *testing.T) {
 		serviceEntryFilename string
 		serviceEntryMonitor  string
 	}{
-		{
-			name:                 "Smoke Test",
-			configFileName:       "./testdata/1-config.yaml",
-			serviceEntryFilename: "./testdata/1-ServiceEntry.yaml",
-			serviceEntryMonitor:  "./testdata/1-ServiceMonitor.yaml",
-		},
 		//{
-		//	name:                 "Skip Probe by Port",
-		//	configFileName:       "./testdata/2-config.yaml",
-		//	serviceEntryFilename: "./testdata/2-ServiceEntry.yaml",
-		//	serviceEntryMonitor:  "./testdata/2-ServiceMonitor.yaml",
+		//	name:                 "Smoke Test",
+		//	configFileName:       "./testdata/1-config.yaml",
+		//	serviceEntryFilename: "./testdata/1-service-entry.yaml",
+		//	serviceEntryMonitor:  "./testdata/1-service-monitor.yaml",
 		//},
+		{
+			name:                 "No Probe for Port",
+			configFileName:       "./testdata/2-config.yaml",
+			serviceEntryFilename: "./testdata/2-service-entry.yaml",
+			serviceEntryMonitor:  "./testdata/2-service-monitor.yaml",
+		},
 	}
 	for _, tt := range tests {
 		se, err := loadServiceEntryJson(tt.serviceEntryFilename)

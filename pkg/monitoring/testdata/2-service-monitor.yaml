@@ -1,0 +1,40 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    for: external-service-1-probe
+    managed-by: blackbox-operator
+  name: sm-external-service-1-probe
+  namespace: istio-system
+spec:
+  endpoints:
+  - interval: 30s
+    params:
+      module:
+      - http_2xx
+      target:
+      - https://www.ebay.de:443
+    path: /probe
+    port: http
+    relabelings:
+    - action: replace
+      sourceLabels:
+      - __param_target
+      targetLabel: instance
+    - action: replace
+      sourceLabels:
+      - __param_module
+      targetLabel: module
+    - action: labeldrop
+      regex: pod|service|container
+    - action: replace
+      sourceLabels:
+      - __meta_kubernetes_namespace
+      targetLabel: namespace
+    scheme: http
+    scrapeTimeout: 1s
+  namespaceSelector:
+    any: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: blackbox-exporter

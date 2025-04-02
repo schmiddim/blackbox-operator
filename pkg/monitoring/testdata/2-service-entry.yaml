@@ -3,7 +3,8 @@ kind: ServiceEntry
 metadata:
   labels:
     managed-by: istio-operator
-  name: external-service
+    skip-probe-for-port: "8200"
+  name: external-service-1-probe
   namespace: istio-system
 spec:
   hosts:
@@ -14,4 +15,4 @@ spec:
       protocol: HTTPS
     - name: https-8200
       number: 8200
-      protocol: HTTPS.
+      protocol: HTTPS
