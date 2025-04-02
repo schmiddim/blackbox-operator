@@ -2,11 +2,14 @@ package monitoring
 
 import (
 	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
+	"gopkg.in/yaml.v3"
 	"istio.io/api/networking/v1alpha3"
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
 	"testing"
 )
 
@@ -24,6 +27,107 @@ func getCfg() config.Config {
 	}
 }
 
+func loadServiceEntry(filename string) (*istioNetworking.ServiceEntry, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	type ServiceEntryWrapper struct {
+		APIVersion string                       `yaml:"apiVersion"`
+		Kind       string                       `yaml:"kind"`
+		Metadata   metav1.ObjectMeta            `yaml:"metadata"`
+		Spec       istioNetworking.ServiceEntry `yaml:"spec"`
+	}
+
+	var wrapper ServiceEntryWrapper
+	if err := yaml.Unmarshal(data, &wrapper); err != nil {
+		return nil, err
+	}
+	wrapper.Spec.ObjectMeta = wrapper.Metadata
+	return &wrapper.Spec, nil
+}
+func loadServiceMonitor(filename string) (*v1.ServiceMonitor, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	type ServiceMonitorWrapper struct {
+		APIVersion string            `yaml:"apiVersion"`
+		Kind       string            `yaml:"kind"`
+		Metadata   metav1.ObjectMeta `yaml:"metadata"`
+		Spec       v1.ServiceMonitor `yaml:"spec"`
+	}
+
+	type LabelSelectorYAML struct {
+		MatchLabels      map[string]string                 `yaml:"matchLabels,omitempty"`
+		MatchExpressions []metav1.LabelSelectorRequirement `yaml:"selector"`
+	}
+
+	type YamlServiceMonitor struct {
+		Spec struct {
+			Endpoints []v1.Endpoint     `yaml:"endpoints"`
+			Selector  LabelSelectorYAML `yaml:"selector"`
+		} `yaml:"spec"`
+	}
+
+	var nwrapper YamlServiceMonitor
+	var wrapper ServiceMonitorWrapper
+	if err := yaml.Unmarshal(data, &wrapper); err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(data, &nwrapper)
+	if err := yaml.Unmarshal(data, &wrapper); err != nil {
+		return nil, err
+	}
+	wrapper.Spec.ObjectMeta = wrapper.Metadata
+	wrapper.Spec.Spec.Selector.MatchLabels = nwrapper.Spec.Selector.MatchLabels
+	wrapper.Spec.Spec.NamespaceSelector.Any = true
+
+	return &wrapper.Spec, nil
+}
+
+func TestLoadFromFS(t *testing.T) {
+	tests := []*struct {
+		name                 string
+		configFileName       string
+		serviceEntryFilename string
+		serviceEntryMonitor  string
+	}{
+		{
+			name:                 "Smoke Test",
+			configFileName:       "./testdata/1-config.yaml",
+			serviceEntryFilename: "./testdata/1-ServiceEntry.yaml",
+			serviceEntryMonitor:  "./testdata/1-ServiceMonitor.yaml",
+		},
+	}
+	for _, tt := range tests {
+		se, err := loadServiceEntry(tt.serviceEntryFilename)
+		serviceMonitor, err := loadServiceMonitor(tt.serviceEntryMonitor)
+		if err != nil {
+			t.Errorf("%s: loadServiceEntry failed: '%v'", tt.name, err)
+		}
+		if err != nil {
+			t.Errorf("%s: loadServiceMonitor failed: '%v'", tt.name, err)
+		}
+		cfg, err := config.LoadConfig(tt.configFileName)
+		if err != nil {
+			t.Errorf("%s: loadServiceEntry failed: '%v'", tt.name, err)
+		}
+
+		smm := ServiceMonitorMapper{
+			config: cfg,
+			log:    &(logr.Logger{}),
+		}
+		generatedSm := smm.MapperForService(se)
+		if diff := cmp.Diff(serviceMonitor, generatedSm); diff != "" {
+			t.Errorf("%s: ServiceMonitor mismatch (-want +got):\n%s", tt.name, diff)
+		}
+	}
+
+}
 func TestServiceMonitorMapper(t *testing.T) {
 
 	tests := []*struct {
@@ -32,31 +136,6 @@ func TestServiceMonitorMapper(t *testing.T) {
 		serviceEntry   istioNetworking.ServiceEntry
 		config         config.Config
 	}{
-		{
-			name: "SmokeTest",
-			serviceMonitor: v1.ServiceMonitor{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:   "sm-example-entry",
-					Labels: nil,
-				},
-			},
-			config: getCfg(),
-			serviceEntry: istioNetworking.ServiceEntry{
-				TypeMeta:   metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{Name: "example-entry"},
-				Spec: v1alpha3.ServiceEntry{
-					Hosts: []string{
-						"www.example.com",
-					},
-					//Addresses:        nil,
-					Ports: []*v1alpha3.ServicePort{{
-						Number:   443,
-						Protocol: "https",
-						Name:     "https",
-					}},
-				},
-			},
-		},
 		{
 			name: "HostReplaceTest",
 			serviceMonitor: v1.ServiceMonitor{
@@ -117,17 +196,7 @@ func TestServiceMonitorMapper(t *testing.T) {
 				t.Errorf("expected %s, got %s", want, got)
 			}
 		}
-		if test.name == "smokeTest" {
-			want := "sm-example-entry"
-			got := sm.Name
-			if got != want {
-				t.Errorf("expected %s, got %s", want, got)
-			}
 
-			if len(sm.Spec.Endpoints) != 1 {
-				t.Errorf("expected 1 endpoints, got %d", len(sm.Spec.Endpoints))
-			}
-		}
 	}
 }
 

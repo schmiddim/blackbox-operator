@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  labels:
+    managed-by: istio-operator
+  name: external-service
+  namespace: istio-system
+spec:
+  hosts:
+    - www.ebay.de
+  ports:
+    - name: https
+      number: 443
+      protocol: HTTPS
