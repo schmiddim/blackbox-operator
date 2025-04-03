@@ -50,7 +50,9 @@ func LoadConfig(filePath string) (*Config, error) {
 	config.Interval = "30s"
 
 	err = yaml.Unmarshal(data, &config)
-
+	if err != nil {
+		return nil, fmt.Errorf("error parsing YAML: %w", err)
+	}
 	config.LabelSelector = metav1.LabelSelector{
 		MatchLabels:      config.TmpSelector.MatchLabels,
 		MatchExpressions: config.TmpSelector.MatchExpressions,
@@ -66,10 +68,6 @@ func LoadConfig(filePath string) (*Config, error) {
 			MatchLabels:      map[string]string{"app.kubernetes.io/name": "blackbox-exporter"},
 			MatchExpressions: nil,
 		}
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("error parsing YAML: %w", err)
 	}
 
 	return &config, nil

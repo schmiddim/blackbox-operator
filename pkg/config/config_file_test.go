@@ -48,6 +48,26 @@ func createTempFile(t *testing.T, content string) string {
 	return tmpFile.Name()
 }
 
+func TestInvalidYaml(t *testing.T) {
+
+	filePath := createTempFile(t, "Invalid")
+	_, err := LoadConfig(filePath)
+	if err == nil {
+		t.Fatalf("File should be invalid Yaml")
+	}
+}
+
+func TestFileNotFound(t *testing.T) {
+	filePath := createTempFile(t, testYAML)
+	defer os.Remove(filePath) // Clean up after test
+
+	_, err := LoadConfig(filePath + "NotFound")
+	if err == nil {
+		t.Fatalf("File should not be found ")
+	}
+
+}
+
 // Test loading the configuration from YAML
 func TestLoadConfig(t *testing.T) {
 	// Create a temporary file with test YAML

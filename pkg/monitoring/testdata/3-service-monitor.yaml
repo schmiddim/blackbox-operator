@@ -13,7 +13,7 @@ spec:
       module:
       - http_2xx
       target:
-      - https://dex.sys.ehyp.acc.example-azure.de:443/healthz
+      - https://dex.sys.foo.acc.example-azure.de:443/healthz
     path: /probe
     port: http
     relabelings:
@@ -63,7 +63,7 @@ spec:
       module:
       - http_2xx
       target:
-      - https://dex.sys.ehyp.dev.example-cloud.de:443/healthz
+      - https://dex.sys.foo.dev.example-cloud.de:443/healthz
     path: /probe
     port: http
     relabelings:
@@ -138,7 +138,32 @@ spec:
       module:
       - http_2xx
       target:
-      - https://dex.sys.ehyp.prod.example-cloud.de:443/healthz
+      - https://dex.sys.foo.prod.example-cloud.de:443/healthz
+    path: /probe
+    port: http
+    relabelings:
+    - action: replace
+      sourceLabels:
+      - __param_target
+      targetLabel: instance
+    - action: replace
+      sourceLabels:
+      - __param_module
+      targetLabel: module
+    - action: labeldrop
+      regex: pod|service|container
+    - action: replace
+      sourceLabels:
+      - __meta_kubernetes_namespace
+      targetLabel: namespace
+    scheme: http
+    scrapeTimeout: 1s
+  - interval: 30s
+    params:
+      module:
+      - http_2xx
+      target:
+      - https://foo.host.example.com:443
     path: /probe
     port: http
     relabelings:

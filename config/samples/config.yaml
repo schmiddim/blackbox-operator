@@ -2,6 +2,13 @@ logLevel: "info"
 interval: "30s"
 scrapeTimeout: "1s"
 serviceMonitorNamingPattern: "sm-%"
+hostMappings:
+  - port: 443
+    replacePattern: dex.sys.
+    replaceWith: dex.sys.*/healthz
+  - port: 443
+    replacePattern: foo.host.example.de
+    replaceWith: foo.host.example.com
 selector:
   matchLabels:
     app.kubernetes.io/instance: blackbox-exporter

@@ -7,12 +7,13 @@ metadata:
   namespace: istio-system
 spec:
   hosts:
-    - dex.sys.ehyp.acc.example-azure.de
+    - dex.sys.foo.acc.example-azure.de
     - dex.sys.core.dev.example-cloud.de
-    - dex.sys.ehyp.dev.example-cloud.de
+    - dex.sys.foo.dev.example-cloud.de
     - dex.sys.sandbox.dev.example-cloud.de
     - dex.sys.core.mgmt.example-cloud.de
-    - dex.sys.ehyp.prod.example-cloud.de
+    - dex.sys.foo.prod.example-cloud.de
+    - foo.host.example.de
   ports:
     - name: https
       number: 443
