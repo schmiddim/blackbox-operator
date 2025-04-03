@@ -82,7 +82,7 @@ func loadServiceMonitorJson(filename string) (*v1.ServiceMonitor, error) {
 	return &smJson, err
 
 }
-func TestLoadFromFS(t *testing.T) {
+func TestServiceEntries(t *testing.T) {
 	tests := []*struct {
 		name                 string
 		configFileName       string
@@ -212,6 +212,7 @@ func TestServiceMonitorMapper(t *testing.T) {
 	}
 }
 
+// @todo move to file  tt
 func TestNamingPattern(t *testing.T) {
 	cfg := getCfg()
 	logger := logr.Logger{}
@@ -230,6 +231,7 @@ func TestNamingPattern(t *testing.T) {
 	}
 }
 
+// @todo move to file  tt
 func TestModuleForHost(t *testing.T) {
 	cfg := getCfg()
 	logger := logr.Logger{}
@@ -293,6 +295,8 @@ func TestModuleForHost(t *testing.T) {
 		})
 	}
 }
+
+// @todo move to file  tt
 func TestModuleForProtocol(t *testing.T) {
 	cfg := getCfg()
 	logger := logr.Logger{}
