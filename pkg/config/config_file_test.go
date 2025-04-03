@@ -9,29 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Test YAML data
-const testYAML = `
-logLevel: "debug"
-defaultModule: "http_test"
-interval: "10s"
-scrapeTimeout: "5s"
-serviceMonitorNamingPattern: "sm-%"
-selector:
-  matchLabels:
-    app.kubernetes.io/name: "test-app"
-protocolModuleMappings:
-  TCP: tcp_connect
-hostMappings:
-  - host: www.ebay.com
-    port: 443
-    replacePattern: www.ebay.com
-    replaceWith: www.ebay.com/health
-exclude:
-  matchLabels:
-    blackbox-operator-scrape: false
-`
-
-// Helper function to create a temporary YAML file
 func createTempFile(t *testing.T, content string) string {
 	t.Helper()
 	tmpFile, err := os.CreateTemp("", "config_test_*.yaml")
@@ -58,8 +35,8 @@ func TestInvalidYaml(t *testing.T) {
 }
 
 func TestFileNotFound(t *testing.T) {
-	filePath := createTempFile(t, testYAML)
-	defer os.Remove(filePath) // Clean up after test
+	filePath := createTempFile(t, "")
+	defer os.Remove(filePath)
 
 	_, err := LoadConfig(filePath + "NotFound")
 	if err == nil {
@@ -70,11 +47,7 @@ func TestFileNotFound(t *testing.T) {
 
 // Test loading the configuration from YAML
 func TestLoadConfig(t *testing.T) {
-	// Create a temporary file with test YAML
-	filePath := createTempFile(t, testYAML)
-	defer os.Remove(filePath) // Clean up after test
-
-	config, err := LoadConfig(filePath)
+	config, err := LoadConfig("./testdata/1-config.yaml")
 	if err != nil {
 		t.Fatalf("Error loading configuration: %v", err)
 	}
@@ -89,12 +62,20 @@ func TestLoadConfig(t *testing.T) {
 		LabelSelector: metav1.LabelSelector{
 			MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
 		},
-		HostMappings: []HostMapping{{
-			Host:           "www.ebay.com",
-			Port:           443,
-			ReplacePattern: "www.ebay.com",
-			ReplaceWith:    "www.ebay.com/health",
-		}},
+		HostMappings: []struct {
+			ServiceEntryName string `yaml:"serviceEntryName,omitempty"`
+			Host             string `yaml:"host,omitempty"`
+			Port             uint32 `yaml:"port,omitempty"`
+			ReplacePattern   string `yaml:"replacePattern"`
+			ReplaceWith      string `yaml:"replaceWith"`
+		}{
+			{
+				Host:           "www.ebay.com",
+				Port:           443,
+				ReplacePattern: "www.ebay.com",
+				ReplaceWith:    "www.ebay.com/health",
+			},
+		},
 		ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
 	}
 
@@ -126,9 +107,7 @@ func TestLoadConfig(t *testing.T) {
 	}
 }
 func TestExcludeSelector(t *testing.T) {
-	filePath := createTempFile(t, testYAML)
-	defer os.Remove(filePath)
-	config, err := LoadConfig(filePath)
+	config, err := LoadConfig("./testdata/1-config.yaml")
 	if err != nil {
 		t.Fatalf("Error loading default configuration: %v", err)
 	}
@@ -138,7 +117,6 @@ func TestExcludeSelector(t *testing.T) {
 	}
 }
 
-// Test default values when `selector` is not set
 func TestLoadConfig_Defaults(t *testing.T) {
 	const yamlWithoutSelector = `
 logLevel: "warn"

@@ -1,0 +1,18 @@
+logLevel: "debug"
+defaultModule: "http_test"
+interval: "10s"
+scrapeTimeout: "5s"
+serviceMonitorNamingPattern: "sm-%"
+selector:
+  matchLabels:
+    app.kubernetes.io/name: "test-app"
+protocolModuleMappings:
+  TCP: tcp_connect
+hostMappings:
+  - host: www.ebay.com
+    port: 443
+    replacePattern: www.ebay.com
+    replaceWith: www.ebay.com/health
+exclude:
+  matchLabels:
+    blackbox-operator-scrape: "false"
