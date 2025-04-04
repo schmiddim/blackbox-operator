@@ -1,0 +1,15 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  labels:
+    managed-by: istio-operator
+  name: external-service-module-overwrite
+  namespace: istio-system
+spec:
+  hosts:
+    - api.trustpilot.com
+    - api.google.com
+  ports:
+    - name: bla
+      number: 4439
+      protocol: tCp

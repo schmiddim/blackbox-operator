@@ -1,17 +1,18 @@
+---
 logLevel: "info"
 interval: "30s"
 scrapeTimeout: "1s"
 serviceMonitorNamingPattern: "sm-%"
 hostMappings:
   - port: 443
-    replacePattern: dex.sys.
+    replacePattern: dex.sys.*
     replaceWith: dex.sys.*/healthz
   - port: 443
     replacePattern: foo.host.example.de
     replaceWith: foo.host.example.com
 moduleMappings:
   - port: 443
-    matchPattern: api.trustpilot.com
+    matchPattern: api.trustpilot.*
     replaceModule: tcp_connect
   - port: 443
     matchPattern: api.google.com

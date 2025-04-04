@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"fmt"
+	"github.com/go-logr/logr"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
 	"istio.io/api/networking/v1alpha3"
 	"regexp"
@@ -10,10 +11,29 @@ import (
 
 type Replace struct {
 	cfg *config.Config
+	log *logr.Logger
 }
 
-func NewReplace(cfg *config.Config) *Replace {
-	return &Replace{cfg: cfg}
+func NewReplace(cfg *config.Config, log *logr.Logger) *Replace {
+	return &Replace{cfg: cfg, log: log}
+}
+
+func (r *Replace) GetModifiedModule(host string, port *v1alpha3.ServicePort) string {
+	for _, mm := range r.cfg.ModuleMappings {
+		re := regexp.MustCompile(mm.MatchPattern)
+		if mm.Port == port.Number && re.MatchString(host) {
+			return mm.ReplaceModule
+		}
+	}
+
+	for protocol, module := range r.cfg.ProtocolModuleMappings {
+		if strings.ToUpper(port.Protocol) == strings.ToUpper(protocol) {
+			return module
+		}
+	}
+
+	r.log.Info(fmt.Sprintf("No module for protocol %s - configuring Default (%s)", port.Protocol, r.cfg.DefaultModule))
+	return r.cfg.DefaultModule
 }
 
 func (r *Replace) GetModifiedHostname(host string, port *v1alpha3.ServicePort) string {

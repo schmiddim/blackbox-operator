@@ -9,10 +9,14 @@ selector:
 protocolModuleMappings:
   TCP: tcp_connect
 hostMappings:
-  - host: www.ebay.com
-    port: 443
-    replacePattern: www.ebay.com
-    replaceWith: www.ebay.com/health
+  - port: 443
+    replacePattern: www.ebay.
+    replaceWith: www.ebay.*/health
+moduleMappings:
+  - port: 443
+    matchPattern: api.trustpilot.com
+    replaceModule: tcp_connect
+
 exclude:
   matchLabels:
     blackbox-operator-scrape: "false"

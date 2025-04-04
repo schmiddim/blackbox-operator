@@ -35,17 +35,6 @@ func (smm *ServiceMonitorMapper) GetNameForServiceMonitor(ServiceEntryName strin
 	return name, nil
 }
 
-func (smm *ServiceMonitorMapper) getModuleForProtocol(port *v1alpha3.ServicePort) string {
-
-	for protocol, module := range smm.config.ProtocolModuleMappings {
-		if strings.ToUpper(port.Protocol) == strings.ToUpper(protocol) {
-			return module
-		}
-	}
-
-	smm.log.Info(fmt.Sprintf("No module for protocol %s - configuring Default (%s)", port.Protocol, smm.config.DefaultModule))
-	return smm.config.DefaultModule
-}
 func (smm *ServiceMonitorMapper) isPortIgnored(port *v1alpha3.ServicePort, labels map[string]string) bool {
 	for key, value := range labels {
 		if key == "skip-probe-for-port" && value == strconv.FormatUint(uint64(port.Number), 10) {
@@ -57,7 +46,7 @@ func (smm *ServiceMonitorMapper) isPortIgnored(port *v1alpha3.ServicePort, label
 }
 func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1alpha3.ServicePort, labels map[string]string) []monitoringv1.Endpoint {
 	var endpoints []monitoringv1.Endpoint
-	replace := NewReplace(smm.config)
+	replace := NewReplace(smm.config, smm.log)
 	for _, port := range ports {
 		if smm.isPortIgnored(port, labels) {
 			continue
@@ -75,7 +64,7 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 				Path:          "/probe",
 				ScrapeTimeout: smm.config.ScrapeTimeout,
 				Params: map[string][]string{
-					"module": {smm.getModuleForProtocol(port)},
+					"module": {replace.GetModifiedModule(host, port)},
 					"target": {hostWithPort},
 				},
 				RelabelConfigs: []monitoringv1.RelabelConfig{

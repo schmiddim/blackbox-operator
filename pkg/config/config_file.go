@@ -16,12 +16,15 @@ type Config struct {
 	Interval                    monitoringv1.Duration `json:"interval"`
 	ScrapeTimeout               monitoringv1.Duration `json:"scrapeTimeout"`
 	HostMappings                []struct {
-		ServiceEntryName string `yaml:"serviceEntryName,omitempty"`
-		Host             string `yaml:"host,omitempty"`
-		Port             uint32 `yaml:"port,omitempty"`
-		ReplacePattern   string `yaml:"replacePattern"`
-		ReplaceWith      string `yaml:"replaceWith"`
+		Port           uint32 `yaml:"port,omitempty"`
+		ReplacePattern string `yaml:"replacePattern"`
+		ReplaceWith    string `yaml:"replaceWith"`
 	} `json:"hostMappings,omitempty"`
+	ModuleMappings []struct {
+		Port          uint32 `yaml:"port,omitempty"`
+		MatchPattern  string `yaml:"matchPattern"`
+		ReplaceModule string `yaml:"replaceModule"`
+	} `json:"moduleMappings,omitempty"`
 	LabelSelector          metav1.LabelSelector `json:"selector"`
 	ExcludeSelector        metav1.LabelSelector `json:"exclude,omitempty"`
 	ProtocolModuleMappings map[string]string    `json:"protocolModuleMappings,omitempty"`

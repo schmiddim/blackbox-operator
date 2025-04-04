@@ -7,7 +7,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
-	"istio.io/api/networking/v1alpha3"
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
@@ -107,6 +106,18 @@ func TestServiceEntries(t *testing.T) {
 			serviceEntryFilename: "./testdata/3-service-entry.yaml",
 			serviceEntryMonitor:  "./testdata/3-service-monitor.yaml",
 		},
+		{
+			name:                 "Test Module Overwrite",
+			configFileName:       "./testdata/4-config.yaml",
+			serviceEntryFilename: "./testdata/4-service-entry.yaml",
+			serviceEntryMonitor:  "./testdata/4-service-monitor.yaml",
+		},
+		{
+			name:                 "Test Module Naming",
+			configFileName:       "./testdata/5-config.yaml",
+			serviceEntryFilename: "./testdata/5-service-entry.yaml",
+			serviceEntryMonitor:  "./testdata/5-service-monitor.yaml",
+		},
 	}
 	for _, tt := range tests {
 		se, err := loadServiceEntryJson(tt.serviceEntryFilename)
@@ -157,108 +168,4 @@ func TestNamingPattern(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected %s, got %s", err, "nil")
 	}
-}
-
-// @todo move to file  tt
-func TestModuleForHost(t *testing.T) {
-	cfg := getCfg()
-	logger := logr.Logger{}
-	mapper := NewServiceMonitorMapper(&cfg, &logger)
-	tests := []*struct {
-		name           string
-		host           string
-		servicePort    v1alpha3.ServicePort
-		expectedHost   string
-		expectedModule string
-	}{
-		{
-			name: "HTTPS with port 9093",
-			host: "google.de",
-			servicePort: v1alpha3.ServicePort{
-				Number:   9093,
-				Protocol: "HTTPS",
-				Name:     "tcp",
-			},
-			expectedHost:   "https://google.de:9093",
-			expectedModule: cfg.DefaultModule,
-		},
-		{
-			name: "no Protocol",
-			host: "test.com",
-			servicePort: v1alpha3.ServicePort{
-				Number:   8080,
-				Protocol: "UNKNOWN",
-				Name:     "unknown",
-			},
-			expectedHost:   "test.com:8080",
-			expectedModule: cfg.DefaultModule,
-		},
-	}
-
-	for _, tt := range tests {
-		serviceEntry := istioNetworking.ServiceEntry{
-			TypeMeta:   metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{Name: "example-entry"},
-			Spec: v1alpha3.ServiceEntry{
-				Hosts: []string{
-					tt.host,
-				},
-
-				Ports: []*v1alpha3.ServicePort{&tt.servicePort},
-			},
-		}
-		t.Run(tt.name, func(t *testing.T) {
-			sm := mapper.MapperForService(&serviceEntry)
-			got := sm.Spec.Endpoints[0].Params["target"][0]
-			if got != tt.expectedHost {
-				t.Errorf("expected %s, got %s", tt.expectedHost, got)
-			}
-
-			//module test
-			gotModule := sm.Spec.Endpoints[0].Params["module"][0]
-			if gotModule != tt.expectedModule {
-				t.Errorf("expected %s, got %s", tt.expectedModule, gotModule)
-			}
-
-		})
-	}
-}
-
-// @todo move to file  tt
-func TestModuleForProtocol(t *testing.T) {
-	cfg := getCfg()
-	logger := logr.Logger{}
-	mapper := NewServiceMonitorMapper(&cfg, &logger)
-
-	tests := []*struct {
-		name           string
-		servicePort    v1alpha3.ServicePort
-		expectedModule string
-	}{
-		{
-			name:           "TCP Protocol",
-			servicePort:    v1alpha3.ServicePort{Number: 9093, Name: "tcp", Protocol: "TCP"},
-			expectedModule: "tcp_connect",
-		},
-		{
-			name:           "TCP Protocol not upper case",
-			servicePort:    v1alpha3.ServicePort{Number: 9093, Name: "tcp", Protocol: "TcP"},
-			expectedModule: "tcp_connect",
-		},
-		{
-			name:           "Back to default",
-			servicePort:    v1alpha3.ServicePort{Number: 9093, Name: "heinzi", Protocol: "HTTPS"},
-			expectedModule: cfg.DefaultModule,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := mapper.getModuleForProtocol(&tt.servicePort)
-			if got != tt.expectedModule {
-				t.Errorf("expected %s, got %s", tt.expectedModule, got)
-			}
-		})
-	}
-
 }

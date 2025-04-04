@@ -63,17 +63,14 @@ func TestLoadConfig(t *testing.T) {
 			MatchLabels: map[string]string{"app.kubernetes.io/name": "test-app"},
 		},
 		HostMappings: []struct {
-			ServiceEntryName string `yaml:"serviceEntryName,omitempty"`
-			Host             string `yaml:"host,omitempty"`
-			Port             uint32 `yaml:"port,omitempty"`
-			ReplacePattern   string `yaml:"replacePattern"`
-			ReplaceWith      string `yaml:"replaceWith"`
+			Port           uint32 `yaml:"port,omitempty"`
+			ReplacePattern string `yaml:"replacePattern"`
+			ReplaceWith    string `yaml:"replaceWith"`
 		}{
 			{
-				Host:           "www.ebay.com",
 				Port:           443,
-				ReplacePattern: "www.ebay.com",
-				ReplaceWith:    "www.ebay.com/health",
+				ReplacePattern: "www.ebay.",
+				ReplaceWith:    "www.ebay.*/health",
 			},
 		},
 		ProtocolModuleMappings: map[string]string{"TCP": "tcp_connect"},
