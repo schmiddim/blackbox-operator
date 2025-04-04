@@ -24,7 +24,7 @@ func (r *Replace) GetModifiedModule(host string, port *v1alpha3.ServicePort) (st
 		re := regexp.MustCompile(mm.MatchPattern)
 		if mm.Port == port.Number && re.MatchString(host) {
 			return mm.ReplaceModule, map[string]string{
-				"module-overwrite": mm.ReplaceModule,
+				"module_overwrite": mm.ReplaceModule,
 			}
 		}
 	}

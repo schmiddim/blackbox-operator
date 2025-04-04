@@ -4,7 +4,7 @@ metadata:
   labels:
     for: external-service-module-overwrite
     managed-by: blackbox-operator
-    module-overwrite: tcp_connect
+    module_overwrite: tcp_connect
   name: sm-external-service-module-overwrite
   namespace: istio-system
 spec:
@@ -18,6 +18,12 @@ spec:
     path: /probe
     port: http
     relabelings:
+    - action: replace
+      replacement: api.trustpilot.com
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-module-overwrite
+      targetLabel: for
     - action: replace
       sourceLabels:
       - __param_target
@@ -43,6 +49,12 @@ spec:
     path: /probe
     port: http
     relabelings:
+    - action: replace
+      replacement: api.google.com
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-module-overwrite
+      targetLabel: for
     - action: replace
       sourceLabels:
       - __param_target

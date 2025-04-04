@@ -44,7 +44,7 @@ func (smm *ServiceMonitorMapper) isPortIgnored(port *v1alpha3.ServicePort, label
 	}
 	return false
 }
-func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1alpha3.ServicePort, labels map[string]string) (endpoints []monitoringv1.Endpoint, labelsForModifications map[string]string) {
+func (smm *ServiceMonitorMapper) generateEndpoints(seName string, hosts []string, ports []*v1alpha3.ServicePort, labels map[string]string) (endpoints []monitoringv1.Endpoint, labelsForModifications map[string]string) {
 	labelsForModifications = make(map[string]string)
 
 	replace := NewReplace(smm.config, smm.log)
@@ -75,6 +75,17 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 				},
 				RelabelConfigs: []monitoringv1.RelabelConfig{
 					{
+						Replacement: &host,
+						TargetLabel: "original_host",
+						Action:      "replace",
+					},
+
+					{
+						Replacement: &seName,
+						TargetLabel: "for",
+						Action:      "replace",
+					},
+					{
 						SourceLabels: []monitoringv1.LabelName{"__param_target"},
 						TargetLabel:  "instance",
 						Action:       "replace",
@@ -104,7 +115,7 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 
 func (smm *ServiceMonitorMapper) MapperForService(se *istioNetworking.ServiceEntry) *monitoringv1.ServiceMonitor {
 
-	endpoints, additionalLabels := smm.generateEndpoints(se.Spec.Hosts, se.Spec.Ports, se.ObjectMeta.Labels)
+	endpoints, additionalLabels := smm.generateEndpoints(se.Name, se.Spec.Hosts, se.Spec.Ports, se.ObjectMeta.Labels)
 	labels := map[string]string{
 		"managed-by": "blackbox-operator",
 		"for":        se.Name,

@@ -18,6 +18,12 @@ spec:
     port: http
     relabelings:
     - action: replace
+      replacement: dex.sys.foo.acc.example-azure.de
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-regex-rewrite
+      targetLabel: for
+    - action: replace
       sourceLabels:
       - __param_target
       targetLabel: instance
@@ -42,6 +48,12 @@ spec:
     path: /probe
     port: http
     relabelings:
+    - action: replace
+      replacement: dex.sys.core.dev.example-cloud.de
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-regex-rewrite
+      targetLabel: for
     - action: replace
       sourceLabels:
       - __param_target
@@ -68,6 +80,12 @@ spec:
     port: http
     relabelings:
     - action: replace
+      replacement: dex.sys.foo.dev.example-cloud.de
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-regex-rewrite
+      targetLabel: for
+    - action: replace
       sourceLabels:
       - __param_target
       targetLabel: instance
@@ -92,6 +110,12 @@ spec:
     path: /probe
     port: http
     relabelings:
+    - action: replace
+      replacement: dex.sys.sandbox.dev.example-cloud.de
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-regex-rewrite
+      targetLabel: for
     - action: replace
       sourceLabels:
       - __param_target
@@ -118,6 +142,12 @@ spec:
     port: http
     relabelings:
     - action: replace
+      replacement: dex.sys.core.mgmt.example-cloud.de
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-regex-rewrite
+      targetLabel: for
+    - action: replace
       sourceLabels:
       - __param_target
       targetLabel: instance
@@ -143,6 +173,12 @@ spec:
     port: http
     relabelings:
     - action: replace
+      replacement: dex.sys.foo.prod.example-cloud.de
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-regex-rewrite
+      targetLabel: for
+    - action: replace
       sourceLabels:
       - __param_target
       targetLabel: instance
@@ -167,6 +203,12 @@ spec:
     path: /probe
     port: http
     relabelings:
+    - action: replace
+      replacement: foo.host.example.de
+      targetLabel: original_host
+    - action: replace
+      replacement: external-service-regex-rewrite
+      targetLabel: for
     - action: replace
       sourceLabels:
       - __param_target

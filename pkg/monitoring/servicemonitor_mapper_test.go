@@ -89,31 +89,31 @@ func TestServiceEntries(t *testing.T) {
 		serviceEntryMonitor  string
 	}{
 		{
-			name:                 "Smoke Test",
+			name:                 "1 Smoke Test",
 			configFileName:       "./testdata/1-config.yaml",
 			serviceEntryFilename: "./testdata/1-service-entry.yaml",
 			serviceEntryMonitor:  "./testdata/1-service-monitor.yaml",
 		},
 		{
-			name:                 "No Probe for Port",
+			name:                 "2 No Probe for Port",
 			configFileName:       "./testdata/2-config.yaml",
 			serviceEntryFilename: "./testdata/2-service-entry.yaml",
 			serviceEntryMonitor:  "./testdata/2-service-monitor.yaml",
 		},
 		{
-			name:                 "Test Rewrite Urls by Regex",
+			name:                 "3 Test Rewrite Urls by Regex",
 			configFileName:       "./testdata/3-config.yaml",
 			serviceEntryFilename: "./testdata/3-service-entry.yaml",
 			serviceEntryMonitor:  "./testdata/3-service-monitor.yaml",
 		},
 		{
-			name:                 "Test Module Overwrite",
+			name:                 "4 Test Module Overwrite",
 			configFileName:       "./testdata/4-config.yaml",
 			serviceEntryFilename: "./testdata/4-service-entry.yaml",
 			serviceEntryMonitor:  "./testdata/4-service-monitor.yaml",
 		},
 		{
-			name:                 "Test Module Naming",
+			name:                 "5 Test Module Naming",
 			configFileName:       "./testdata/5-config.yaml",
 			serviceEntryFilename: "./testdata/5-service-entry.yaml",
 			serviceEntryMonitor:  "./testdata/5-service-monitor.yaml",
