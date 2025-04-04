@@ -18,22 +18,25 @@ func NewReplace(cfg *config.Config, log *logr.Logger) *Replace {
 	return &Replace{cfg: cfg, log: log}
 }
 
-func (r *Replace) GetModifiedModule(host string, port *v1alpha3.ServicePort) string {
+func (r *Replace) GetModifiedModule(host string, port *v1alpha3.ServicePort) (string, map[string]string) {
+
 	for _, mm := range r.cfg.ModuleMappings {
 		re := regexp.MustCompile(mm.MatchPattern)
 		if mm.Port == port.Number && re.MatchString(host) {
-			return mm.ReplaceModule
+			return mm.ReplaceModule, map[string]string{
+				"module-overwrite": mm.ReplaceModule,
+			}
 		}
 	}
 
 	for protocol, module := range r.cfg.ProtocolModuleMappings {
 		if strings.ToUpper(port.Protocol) == strings.ToUpper(protocol) {
-			return module
+			return module, map[string]string{}
 		}
 	}
 
 	r.log.Info(fmt.Sprintf("No module for protocol %s - configuring Default (%s)", port.Protocol, r.cfg.DefaultModule))
-	return r.cfg.DefaultModule
+	return r.cfg.DefaultModule, map[string]string{}
 }
 
 func (r *Replace) GetModifiedHostname(host string, port *v1alpha3.ServicePort) string {

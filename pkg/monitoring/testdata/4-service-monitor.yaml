@@ -4,6 +4,7 @@ metadata:
   labels:
     for: external-service-module-overwrite
     managed-by: blackbox-operator
+    module-overwrite: tcp_connect
   name: sm-external-service-module-overwrite
   namespace: istio-system
 spec:

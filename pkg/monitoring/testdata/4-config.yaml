@@ -12,7 +12,7 @@ hostMappings:
     replaceWith: foo.host.example.com
 moduleMappings:
   - port: 443
-    matchPattern: api.trustpilot.*
+    matchPattern: api.trustpilot
     replaceModule: tcp_connect
   - port: 443
     matchPattern: api.google.com

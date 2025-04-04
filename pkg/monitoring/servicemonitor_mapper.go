@@ -44,8 +44,9 @@ func (smm *ServiceMonitorMapper) isPortIgnored(port *v1alpha3.ServicePort, label
 	}
 	return false
 }
-func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1alpha3.ServicePort, labels map[string]string) []monitoringv1.Endpoint {
-	var endpoints []monitoringv1.Endpoint
+func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1alpha3.ServicePort, labels map[string]string) (endpoints []monitoringv1.Endpoint, labelsForModifications map[string]string) {
+	labelsForModifications = make(map[string]string)
+
 	replace := NewReplace(smm.config, smm.log)
 	for _, port := range ports {
 		if smm.isPortIgnored(port, labels) {
@@ -54,6 +55,11 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 		for _, host := range hosts {
 
 			hostWithPort := replace.GetModifiedHostname(host, port)
+			modifiedModule, labelsFromModule := replace.GetModifiedModule(host, port)
+			for k, v := range labelsFromModule {
+				labelsForModifications[k] = v
+			}
+
 			if strings.ToUpper(port.GetProtocol()) == "HTTPS" {
 				hostWithPort = fmt.Sprintf("https://%s", hostWithPort)
 			}
@@ -64,7 +70,7 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 				Path:          "/probe",
 				ScrapeTimeout: smm.config.ScrapeTimeout,
 				Params: map[string][]string{
-					"module": {replace.GetModifiedModule(host, port)},
+					"module": {modifiedModule},
 					"target": {hostWithPort},
 				},
 				RelabelConfigs: []monitoringv1.RelabelConfig{
@@ -93,18 +99,25 @@ func (smm *ServiceMonitorMapper) generateEndpoints(hosts []string, ports []*v1al
 
 		}
 	}
-	return endpoints
+	return endpoints, labelsForModifications
 }
 
 func (smm *ServiceMonitorMapper) MapperForService(se *istioNetworking.ServiceEntry) *monitoringv1.ServiceMonitor {
+
+	endpoints, additionalLabels := smm.generateEndpoints(se.Spec.Hosts, se.Spec.Ports, se.ObjectMeta.Labels)
+	labels := map[string]string{
+		"managed-by": "blackbox-operator",
+		"for":        se.Name,
+	}
+	for k, v := range additionalLabels {
+		labels[k] = v
+	}
+
 	sm := &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "sm-" + se.Name,
 			Namespace: se.Namespace,
-			Labels: map[string]string{
-				"managed-by": "blackbox-operator",
-				"for":        se.Name,
-			},
+			Labels:    labels,
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			NamespaceSelector: monitoringv1.NamespaceSelector{
@@ -112,7 +125,7 @@ func (smm *ServiceMonitorMapper) MapperForService(se *istioNetworking.ServiceEnt
 			},
 
 			Selector:  smm.config.LabelSelector,
-			Endpoints: smm.generateEndpoints(se.Spec.Hosts, se.Spec.Ports, se.ObjectMeta.Labels),
+			Endpoints: endpoints,
 		},
 	}
 
