@@ -48,19 +48,19 @@ func loadServiceEntryJson(filename string) (*istioNetworking.ServiceEntry, error
 }
 
 var _ = Describe("ServiceEntry Controller", func() {
-	Context("When reconciling a serviceEntry that has theexclude Label - do nothing", func() {
+	Context("When reconciling a serviceEntry that has the exclude Label - do nothing", func() {
 		const resourceName = "test-resource"
 
 		//ctx := context.Background()
 
-		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: "default",
-		}
-
 		serviceEntry, err := loadServiceEntryJson("../../pkg/monitoring/testdata/2-service-entry.yaml")
 		Expect(err).NotTo(HaveOccurred())
-		serviceEntry.Namespace = typeNamespacedName.Namespace
+		serviceEntry.Namespace = "default"
+		typeNamespacedName := types.NamespacedName{
+			Name:      serviceEntry.Name,
+			Namespace: serviceEntry.Namespace,
+		}
+
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind ServiceEntry")
 			err := k8sClient.Get(ctx, typeNamespacedName, serviceEntry)
@@ -81,7 +81,7 @@ var _ = Describe("ServiceEntry Controller", func() {
 					ScrapeTimeout:               "10s",
 					LabelSelector:               metav1.LabelSelector{},
 					ExcludeSelector: metav1.LabelSelector{
-						MatchLabels: map[string]string{"skip-probe-for-port:": "8200"},
+						MatchLabels: map[string]string{"skip-probe-for-port": "8200"},
 					},
 					ProtocolModuleMappings: nil,
 				},
