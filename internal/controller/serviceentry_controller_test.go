@@ -20,9 +20,10 @@ var _ = Describe("ServiceEntry Controller", func() {
 	Context("When reconciling a serviceEntry that has the exclude Label - do nothing", func() {
 		const resourceName = "test-resource"
 
-		//ctx := context.Background()
+		ctx := context.Background()
 
 		serviceEntry, err := utils.LoadServiceEntry("../../pkg/monitoring/testdata/2-service-entry.yaml")
+
 		Expect(err).NotTo(HaveOccurred())
 		serviceEntry.Namespace = "default"
 		typeNamespacedName := types.NamespacedName{
@@ -36,6 +37,15 @@ var _ = Describe("ServiceEntry Controller", func() {
 			if err != nil && errors.IsNotFound(err) {
 				Expect(k8sClient.Create(ctx, serviceEntry)).To(Succeed())
 			}
+			By("creating the custom resource for the Kind ServiceMonitor")
+			serviceMonitor, err := utils.LoadServiceMonitor("../../pkg/monitoring/testdata/2-service-monitor.yaml")
+			serviceMonitor.Namespace = serviceEntry.Namespace
+			err = k8sClient.Get(ctx, types.NamespacedName{Name: "sm-" + serviceEntry.Name, Namespace: serviceEntry.Namespace}, serviceMonitor)
+			if err != nil && errors.IsNotFound(err) {
+
+				Expect(k8sClient.Create(ctx, serviceMonitor)).To(Succeed())
+			}
+
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
