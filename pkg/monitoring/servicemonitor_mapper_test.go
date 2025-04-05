@@ -1,16 +1,11 @@
 package monitoring
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
-	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
-	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"github.com/schmiddim/blackbox-operator/test/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	yaml "sigs.k8s.io/yaml/goyaml.v3"
 	"testing"
 )
 
@@ -28,59 +23,6 @@ func getCfg() config.Config {
 	}
 }
 
-func loadServiceEntryJson(filename string) (*istioNetworking.ServiceEntry, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Println("Error reading YAML file:", err)
-		return nil, err
-	}
-	var jsonData interface{}
-	if err := yaml.Unmarshal(data, &jsonData); err != nil {
-		fmt.Println("Error unmarshalling YAML:", err)
-		return nil, err
-	}
-	result, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		fmt.Println("Error marshalling to JSON:", err)
-		return nil, err
-	}
-
-	seJson := istioNetworking.ServiceEntry{}
-	err = json.Unmarshal(result, &seJson)
-
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
-	}
-
-	return &seJson, err
-}
-
-func loadServiceMonitorJson(filename string) (*v1.ServiceMonitor, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Println("Error reading YAML file:", err)
-		return nil, err
-	}
-	var jsonData interface{}
-	if err := yaml.Unmarshal(data, &jsonData); err != nil {
-		fmt.Println("Error unmarshalling YAML:", err)
-		return nil, err
-	}
-	result, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		fmt.Println("Error marshalling to JSON:", err)
-		return nil, err
-	}
-
-	smJson := v1.ServiceMonitor{}
-	err = json.Unmarshal(result, &smJson)
-
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
-	}
-	return &smJson, err
-
-}
 func TestServiceEntries(t *testing.T) {
 	tests := []*struct {
 		name                 string
@@ -120,12 +62,12 @@ func TestServiceEntries(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		se, err := loadServiceEntryJson(tt.serviceEntryFilename)
+		se, err := utils.LoadServiceEntry(tt.serviceEntryFilename)
 		if err != nil {
 			t.Errorf("%s: loadServiceEntry failed: '%v'", tt.name, err)
 		}
 
-		serviceMonitor, err := loadServiceMonitorJson(tt.serviceEntryMonitor)
+		serviceMonitor, err := utils.LoadServiceMonitor(tt.serviceEntryMonitor)
 		if err != nil {
 			t.Errorf("%s: loadServiceMonitor failed: '%v'", tt.name, err)
 		}

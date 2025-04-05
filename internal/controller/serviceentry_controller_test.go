@@ -2,17 +2,13 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/schmiddim/blackbox-operator/pkg/config"
-	"istio.io/api/networking/v1alpha3"
-	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	"os"
-	yaml "sigs.k8s.io/yaml/goyaml.v3"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/schmiddim/blackbox-operator/pkg/config"
+	"github.com/schmiddim/blackbox-operator/test/utils"
+	"istio.io/api/networking/v1alpha3"
+	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -20,40 +16,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func loadServiceEntryJson(filename string) (*istioNetworking.ServiceEntry, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Println("Error reading YAML file:", err)
-		return nil, err
-	}
-	var jsonData interface{}
-	if err := yaml.Unmarshal(data, &jsonData); err != nil {
-		fmt.Println("Error unmarshalling YAML:", err)
-		return nil, err
-	}
-	result, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		fmt.Println("Error marshalling to JSON:", err)
-		return nil, err
-	}
-
-	seJson := istioNetworking.ServiceEntry{}
-	err = json.Unmarshal(result, &seJson)
-
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
-	}
-
-	return &seJson, err
-}
-
 var _ = Describe("ServiceEntry Controller", func() {
 	Context("When reconciling a serviceEntry that has the exclude Label - do nothing", func() {
 		const resourceName = "test-resource"
 
 		//ctx := context.Background()
 
-		serviceEntry, err := loadServiceEntryJson("../../pkg/monitoring/testdata/2-service-entry.yaml")
+		serviceEntry, err := utils.LoadServiceEntry("../../pkg/monitoring/testdata/2-service-entry.yaml")
 		Expect(err).NotTo(HaveOccurred())
 		serviceEntry.Namespace = "default"
 		typeNamespacedName := types.NamespacedName{
