@@ -2,10 +2,14 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/schmiddim/blackbox-operator/pkg/config"
 	"istio.io/api/networking/v1alpha3"
 	istioNetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"os"
+	yaml "sigs.k8s.io/yaml/goyaml.v3"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -16,7 +20,90 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func loadServiceEntryJson(filename string) (*istioNetworking.ServiceEntry, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Println("Error reading YAML file:", err)
+		return nil, err
+	}
+	var jsonData interface{}
+	if err := yaml.Unmarshal(data, &jsonData); err != nil {
+		fmt.Println("Error unmarshalling YAML:", err)
+		return nil, err
+	}
+	result, err := json.MarshalIndent(jsonData, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshalling to JSON:", err)
+		return nil, err
+	}
+
+	seJson := istioNetworking.ServiceEntry{}
+	err = json.Unmarshal(result, &seJson)
+
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+	}
+
+	return &seJson, err
+}
+
 var _ = Describe("ServiceEntry Controller", func() {
+	Context("When reconciling a serviceEntry that has theexclude Label - do nothing", func() {
+		const resourceName = "test-resource"
+
+		//ctx := context.Background()
+
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
+
+		serviceEntry, err := loadServiceEntryJson("../../pkg/monitoring/testdata/2-service-entry.yaml")
+		Expect(err).NotTo(HaveOccurred())
+		serviceEntry.Namespace = typeNamespacedName.Namespace
+		BeforeEach(func() {
+			By("creating the custom resource for the Kind ServiceEntry")
+			err := k8sClient.Get(ctx, typeNamespacedName, serviceEntry)
+			if err != nil && errors.IsNotFound(err) {
+				Expect(k8sClient.Create(ctx, serviceEntry)).To(Succeed())
+			}
+		})
+		It("should successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &ServiceEntryReconciler{
+				Client: k8sClient,
+				Scheme: k8sClient.Scheme(),
+				Config: &config.Config{
+					LogLevel:                    "info",
+					DefaultModule:               "http_2xx",
+					ServiceMonitorNamingPattern: "sm-%s",
+					Interval:                    "10s",
+					ScrapeTimeout:               "10s",
+					LabelSelector:               metav1.LabelSelector{},
+					ExcludeSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"skip-probe-for-port:": "8200"},
+					},
+					ProtocolModuleMappings: nil,
+				},
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			resource := &monitoringv1.ServiceMonitor{}
+			//resource := &v1alpha3.ServiceEntry{}
+
+			typeNamespacedName := types.NamespacedName{
+				Name:      "sm-" + resourceName,
+				Namespace: "default",
+			}
+			err = k8sClient.Get(ctx, typeNamespacedName, resource)
+			Expect(err).To(HaveOccurred())
+
+		})
+	})
+
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -24,7 +111,7 @@ var _ = Describe("ServiceEntry Controller", func() {
 
 		typeNamespacedName := types.NamespacedName{
 			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
+			Namespace: "default",
 		}
 		serviceentry := &istioNetworking.ServiceEntry{
 			TypeMeta: metav1.TypeMeta{},
