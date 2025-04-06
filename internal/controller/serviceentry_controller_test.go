@@ -17,12 +17,77 @@ import (
 )
 
 var _ = Describe("ServiceEntry Controller", func() {
+	Context("When reconciling a serviceEntry with an existing ServiceMonitor - update it", func() {
+		ctx := context.Background()
+
+		const resourceSeName = "external-service-1-probe"
+		const resourceSmName = "sm-" + resourceSeName
+		typedNsServiceEntry := types.NamespacedName{
+			Name:      resourceSeName,
+			Namespace: "default",
+		}
+		typedNsServiceMonitor := types.NamespacedName{
+			Name:      resourceSmName,
+			Namespace: "default",
+		}
+		serviceEntry, err := utils.LoadServiceEntry("./testdata/2-service-entry.yaml")
+		Expect(err).NotTo(HaveOccurred())
+		serviceMonitor, err := utils.LoadServiceMonitor("./testdata/2-service-monitor.yaml")
+		Expect(err).NotTo(HaveOccurred())
+
+		serviceMonitor.Spec.Selector.MatchLabels = map[string]string{
+			"app.kubernetes.io/instance": "other-exporter",
+		}
+
+		serviceMonitor.Spec.Endpoints[0].Params["module"][0] = "UNKNOWN"
+		BeforeEach(func() {
+			By("Creating  ServiceMonitor")
+			err := k8sClient.Get(ctx, typedNsServiceMonitor, serviceMonitor)
+			if err != nil && errors.IsNotFound(err) {
+				Expect(k8sClient.Create(ctx, serviceMonitor)).To(Succeed())
+			}
+			By("Creating ServiceEntry")
+			err = k8sClient.Get(ctx, typedNsServiceEntry, serviceEntry)
+			if err != nil && errors.IsNotFound(err) {
+				Expect(k8sClient.Create(ctx, serviceEntry)).To(Succeed())
+			}
+		})
+
+		It("should successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &ServiceEntryReconciler{
+				Client: k8sClient,
+				Scheme: k8sClient.Scheme(),
+				Config: &config.Config{
+					LogLevel:                    "info",
+					DefaultModule:               "http_2xx",
+					ServiceMonitorNamingPattern: "sm-%s",
+					Interval:                    "10s",
+					ScrapeTimeout:               "10s",
+					LabelSelector:               metav1.LabelSelector{},
+					ProtocolModuleMappings:      nil,
+				},
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typedNsServiceEntry,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			resource := &monitoringv1.ServiceMonitor{}
+			err = k8sClient.Get(ctx, typedNsServiceMonitor, resource)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resource.Spec.Endpoints[0].Params["module"][0]).To(Equal("http_2xx")) // == "dsafsadfasdf"
+		})
+
+	})
+
 	Context("When reconciling a serviceEntry that has the exclude Label - do nothing", func() {
 		const resourceName = "test-resource"
 
 		ctx := context.Background()
 
-		serviceEntry, err := utils.LoadServiceEntry("../../pkg/monitoring/testdata/2-service-entry.yaml")
+		serviceEntry, err := utils.LoadServiceEntry("./testdata/2-service-entry.yaml")
 
 		Expect(err).NotTo(HaveOccurred())
 		serviceEntry.Namespace = "default"
@@ -38,7 +103,7 @@ var _ = Describe("ServiceEntry Controller", func() {
 				Expect(k8sClient.Create(ctx, serviceEntry)).To(Succeed())
 			}
 			By("creating the custom resource for the Kind ServiceMonitor")
-			serviceMonitor, err := utils.LoadServiceMonitor("../../pkg/monitoring/testdata/2-service-monitor.yaml")
+			serviceMonitor, err := utils.LoadServiceMonitor("./testdata/2-service-monitor.yaml")
 			serviceMonitor.Namespace = serviceEntry.Namespace
 			err = k8sClient.Get(ctx, types.NamespacedName{Name: "sm-" + serviceEntry.Name, Namespace: serviceEntry.Namespace}, serviceMonitor)
 			if err != nil && errors.IsNotFound(err) {
@@ -71,7 +136,6 @@ var _ = Describe("ServiceEntry Controller", func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			resource := &monitoringv1.ServiceMonitor{}
-			//resource := &v1alpha3.ServiceEntry{}
 
 			typeNamespacedName := types.NamespacedName{
 				Name:      "sm-" + resourceName,

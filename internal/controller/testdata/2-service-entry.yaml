@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  labels:
+    managed-by: istio-operator
+    skip-probe-for-port: "8200"
+  name: external-service-1-probe
+  namespace: default
+spec:
+  hosts:
+    - www.ebay.de
+  ports:
+    - name: https
+      number: 443
+      protocol: HTTPS
+    - name: https-8200
+      number: 8200
+      protocol: HTTPS
