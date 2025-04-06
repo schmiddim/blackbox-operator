@@ -17,6 +17,71 @@ import (
 )
 
 var _ = Describe("ServiceEntry Controller", func() {
+	Context("When reconciling a deleted ServiceEntry the existing ServiceMonitor should be deleted", func() {
+
+		const resourceSeName = "external-service-1-probe"
+		const resourceSmName = "sm-" + resourceSeName
+		typedNsServiceEntry := types.NamespacedName{
+			Name:      resourceSeName,
+			Namespace: "default",
+		}
+		typedNsServiceMonitor := types.NamespacedName{
+			Name:      resourceSmName,
+			Namespace: "default",
+		}
+		serviceEntry, err := utils.LoadServiceEntry("./testdata/2-service-entry.yaml")
+		Expect(err).NotTo(HaveOccurred())
+		//serviceMonitor, err := utils.LoadServiceMonitor("./testdata/2-service-monitor.yaml")
+		//Expect(err).NotTo(HaveOccurred())
+		BeforeEach(func() {
+			By("Creating ServiceEntry")
+			err = k8sClient.Get(ctx, typedNsServiceEntry, serviceEntry)
+			if err != nil && errors.IsNotFound(err) {
+				Expect(k8sClient.Create(ctx, serviceEntry)).To(Succeed())
+			}
+
+		})
+
+		It("should successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &ServiceEntryReconciler{
+				Client: k8sClient,
+				Scheme: k8sClient.Scheme(),
+				Config: &config.Config{
+					LogLevel:                    "info",
+					DefaultModule:               "http_2xx",
+					ServiceMonitorNamingPattern: "sm-%s",
+					Interval:                    "10s",
+					ScrapeTimeout:               "10s",
+					LabelSelector:               metav1.LabelSelector{},
+					ProtocolModuleMappings:      nil,
+				},
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typedNsServiceEntry,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			resource := &monitoringv1.ServiceMonitor{}
+			err = k8sClient.Get(ctx, typedNsServiceMonitor, resource)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Delete the Service Entry and reconcile
+			err = k8sClient.Delete(ctx, serviceEntry)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typedNsServiceEntry,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			err = k8sClient.Get(ctx, typedNsServiceMonitor, &monitoringv1.ServiceMonitor{})
+			Expect(errors.IsNotFound(err)).To(BeTrue())
+
+		})
+
+	})
+
 	Context("When reconciling a serviceEntry with an existing ServiceMonitor - update it", func() {
 		ctx := context.Background()
 
@@ -34,10 +99,6 @@ var _ = Describe("ServiceEntry Controller", func() {
 		Expect(err).NotTo(HaveOccurred())
 		serviceMonitor, err := utils.LoadServiceMonitor("./testdata/2-service-monitor.yaml")
 		Expect(err).NotTo(HaveOccurred())
-
-		serviceMonitor.Spec.Selector.MatchLabels = map[string]string{
-			"app.kubernetes.io/instance": "other-exporter",
-		}
 
 		serviceMonitor.Spec.Endpoints[0].Params["module"][0] = "UNKNOWN"
 		BeforeEach(func() {
