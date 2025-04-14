@@ -1,7 +1,7 @@
 # blackbox-operator
 [![codecov](https://codecov.io/gh/schmiddim/blackbox-operator/graph/badge.svg?token=lxCOCj9JPi)](https://codecov.io/gh/schmiddim/blackbox-operator)
 [![Docker Pulls](https://img.shields.io/docker/pulls/schmiddim/blackbox-operator.svg)](https://hub.docker.com/r/schmiddim/blackbox-operator)
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/schmiddim/blackbox-operator)](https://goreportcard.com/report/github.com/schmiddim/blackbox-operator)
 
 ## Todos
 - verknuefpung auf die servicemonitore
