@@ -12,7 +12,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.84.1
 	istio.io/api v1.27.0-beta.0.0.20250731082105-36763529c462
 	istio.io/client-go v1.27.0
-	k8s.io/apimachinery v0.33.3
+	k8s.io/apimachinery v0.33.4
 	k8s.io/client-go v0.33.3
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/yaml v1.6.0
