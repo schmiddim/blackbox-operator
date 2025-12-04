@@ -10,7 +10,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.87.0
-	istio.io/api v1.28.0
+	istio.io/api v1.28.1
 	istio.io/client-go v1.28.0
 	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.2
