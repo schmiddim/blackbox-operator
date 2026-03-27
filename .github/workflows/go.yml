@@ -13,7 +13,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: '1.23.0'
+          go-version: '1.25.0'
       - name: Install Operator SDK
         run: |
           curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.39.2/operator-sdk_linux_amd64
