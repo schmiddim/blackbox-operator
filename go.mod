@@ -9,7 +9,7 @@ require (
 	github.com/onsi/gomega v1.44.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.94.2
 	istio.io/api v1.31.3
-	istio.io/client-go v1.31.3
+	istio.io/client-go v1.31.4
 	k8s.io/apimachinery v0.37.2
 	k8s.io/client-go v0.37.1
 	sigs.k8s.io/controller-runtime v0.25.2
